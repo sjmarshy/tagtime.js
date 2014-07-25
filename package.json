@@ -1,0 +1,23 @@
+{
+  "name": "tagtime.js",
+  "version": "0.1.0",
+  "description": "A node.js implementation of [tagtime](https://github.com/dreeves/tagtime)",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sjmarshy/tagtime.js.git"
+  },
+  "keywords": [
+    "tagtime",
+    "node"
+  ],
+  "author": "Sam Marshall <sjmarshy@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sjmarshy/tagtime.js/issues"
+  },
+  "homepage": "https://github.com/sjmarshy/tagtime.js"
+}
