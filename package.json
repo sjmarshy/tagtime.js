@@ -19,5 +19,12 @@
   "bugs": {
     "url": "https://github.com/sjmarshy/tagtime.js/issues"
   },
-  "homepage": "https://github.com/sjmarshy/tagtime.js"
+  "homepage": "https://github.com/sjmarshy/tagtime.js",
+  "dependencies": {
+    "moment": "^2.7.0",
+    "npmlog": "^0.1.1",
+    "coffee-script": "^1.7.1",
+    "gulp": "^3.8.6",
+    "mersenne": "0.0.3"
+  }
 }
