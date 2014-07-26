@@ -10,20 +10,23 @@ class Pings
     @format:        'YYYY-MM-DD HH:mm:ss Z'
 
     constructor:(frequency_min) ->
+        m = require('mersenne').MersenneTwister19937
         @seed          = Pings.initial_seed
-        @rng           = require 'mersenne'
+        @rng           = new m()
         @frequency_sec = frequency_min * 60
 
         @seedRng()
 
     seedRng: ->
-        @rng.seed @seed
+        @rng.init_genrand @seed
 
     random: ->
-        return @rng.rand(1)
+        return @rng.genrand_real2()
     
     ping: ->
-        return -1 * @frequency_sec * Math.log(@random())
+        rngNum = @random()
+        log = Math.log(@random())
+        return -1 * @frequency_sec * log
 
     pingBefore: (time) ->
         @seed = Pings.initial_seed
@@ -32,7 +35,7 @@ class Pings
         nextPing = lastPing = @seed
         while nextPing < time
             lastPing = nextPing
-            @nextPing nextPing
+            nextPing = @nextPing lastPing
 
         return lastPing
 
@@ -40,7 +43,10 @@ class Pings
         @seed = prevPing
         @seedRng()
 
-        return @ping() + prevPing
+        interval = @ping()
+
+        return interval + prevPing
+
 
 
 fs.readFile './config/tagtime.json', (error, buffer) ->
@@ -51,6 +57,11 @@ fs.readFile './config/tagtime.json', (error, buffer) ->
         config = JSON.parse buffer.toString()
         pinger = new Pings(config.frequency)
 
-        console.log('last ping was: ', pinger.pingBefore(moment.unix())
+        now = moment().unix()
+        lastPing = pinger.pingBefore now
+        nextPing = pinger.nextPing lastPing
+
+        console.log('last ping was: ', moment.unix(lastPing).format(Pings.format))
+        console.log('next ping is:  ', moment.unix(nextPing).format(Pings.format))
 
 

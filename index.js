@@ -1,42 +1,79 @@
-// moment should help us with the time requirements
-var moment = require('moment');
-var fs     = require('fs');
-var log    = require('npmlog');
+(function() {
+  var Pings, fs, moment;
 
-var format = 'YYYY-MM-DD HH:mm:ss Z'
+  moment = require('moment');
 
-console = log
+  fs = require('fs');
 
-var now_s = moment().unix();
-var now_str = moment.unix(now_s).format(format);
+  Pings = (function() {
+    Pings.initial_seed = 1406331136;
 
-// we need a way to start with a seed, use each new interval as the next seed,
-// and this way we should be able to deterministically work out any ping in the
-// series. 
+    Pings.start_sec = moment().unix();
 
-var getNextIntervalSeconds = function (frequency_m) {
-    return -1 * Math.log(Math.random()) * (frequency_m * 60);
-};
+    Pings.format = 'YYYY-MM-DD HH:mm:ss Z';
 
-fs.readFile('./config/tagtime.json', function (error, buf) {
-    var config, frequency_m;
-    if (error) {
-        console.error(error);
-        process.exit(1);
+    function Pings(frequency_min) {
+      var m;
+      m = require('mersenne').MersenneTwister19937;
+      this.seed = Pings.initial_seed;
+      this.rng = new m();
+      this.frequency_sec = frequency_min * 60;
+      this.seedRng();
     }
-    config         = JSON.parse(buf.toString());
-    frequency_m    = config.frequency;
-    nextInterval_s = getNextIntervalSeconds(frequency_m);
-    nextPing_s     = now_s + nextInterval_s;
-    nextPing_str   = moment.unix(nextPing_s).format(format);
 
-    console.log(moment.unix(nextPing_s).format());
+    Pings.prototype.seedRng = function() {
+      return this.rng.init_genrand(this.seed);
+    };
 
-    console.log('')
-    console.info('now_str', now_str);
-    console.info('difference: ', nextInterval_s);
-    console.info('nextPing_str', nextPing_str);
-    console.log('');
-});
+    Pings.prototype.random = function() {
+      return this.rng.genrand_real2();
+    };
 
+    Pings.prototype.ping = function() {
+      var log, rngNum;
+      rngNum = this.random();
+      log = Math.log(this.random());
+      return -1 * this.frequency_sec * log;
+    };
 
+    Pings.prototype.pingBefore = function(time) {
+      var lastPing, nextPing;
+      this.seed = Pings.initial_seed;
+      this.seedRng();
+      nextPing = lastPing = this.seed;
+      while (nextPing < time) {
+        lastPing = nextPing;
+        nextPing = this.nextPing(lastPing);
+      }
+      return lastPing;
+    };
+
+    Pings.prototype.nextPing = function(prevPing) {
+      var interval;
+      this.seed = prevPing;
+      this.seedRng();
+      interval = this.ping();
+      return interval + prevPing;
+    };
+
+    return Pings;
+
+  })();
+
+  fs.readFile('./config/tagtime.json', function(error, buffer) {
+    var config, lastPing, nextPing, now, pinger;
+    if (error) {
+      console.error(error);
+      return process.exit(1);
+    } else {
+      config = JSON.parse(buffer.toString());
+      pinger = new Pings(config.frequency);
+      now = moment().unix();
+      lastPing = pinger.pingBefore(now);
+      nextPing = pinger.nextPing(lastPing);
+      console.log('last ping was: ', moment.unix(lastPing).format(Pings.format));
+      return console.log('next ping is:  ', moment.unix(nextPing).format(Pings.format));
+    }
+  });
+
+}).call(this);
