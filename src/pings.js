@@ -25,7 +25,7 @@
       console.log('last ping was: ', moment.unix(lastPing).format(Pings.format));
       console.log('gap is: ', moment.duration(nextPing, 'seconds').subtract(lastPing, 'seconds').humanize());
       console.log('next ping is:  ', moment.unix(nextPing).format(Pings.format));
-      console.log('\nbeen running for: ', moment.duration(getNow(), 'seconds').subtract(startSec, 'seconds').humanize(), '\n');
+      console.log('\nbeen running for: ', moment.duration(Pings.getNow(), 'seconds').subtract(startSec, 'seconds').humanize(), '\n');
       return console.log('-----------\n\n');
     };
 
@@ -50,6 +50,7 @@
           if (now > _this.nxt) {
             _this.lst = _this.nxt;
             _this.nxt = _this.nextPing(_this.lst);
+            _this.emit('ping', now);
             return _this.log();
           }
         };

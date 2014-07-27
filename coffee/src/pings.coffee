@@ -4,7 +4,7 @@ EventEmitter = require('events').EventEmitter
 # Pings will hold all the information surrounding the pinging, and
 # will contain utility methods surrounding the ping times.
 
-module.exports = 
+module.exports =
     class Pings extends EventEmitter
         @initial_seed:  1406331136
         @start_sec:     moment().unix()
@@ -19,10 +19,9 @@ module.exports =
             console.log('gap is: ', moment.duration(nextPing, 'seconds')
                 .subtract(lastPing, 'seconds').humanize())
             console.log('next ping is:  ', moment.unix(nextPing).format(Pings.format))
-            console.log('\nbeen running for: ', moment.duration(getNow(), 'seconds')
+            console.log('\nbeen running for: ', moment.duration(Pings.getNow(), 'seconds')
                 .subtract(startSec, 'seconds').humanize(), '\n')
             console.log('-----------\n\n')
-
 
 
         constructor:(frequency_min) ->
@@ -47,6 +46,8 @@ module.exports =
                     @lst = @nxt
                     @nxt = @nextPing @lst
 
+                    @emit('ping', now)
+
                     @log()
             , 1000
 
@@ -58,7 +59,7 @@ module.exports =
 
         random: ->
             return @rng.genrand_real2()
-        
+
         ping: ->
             rngNum = @random()
             log = Math.log(@random())
