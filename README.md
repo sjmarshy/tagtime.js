@@ -15,10 +15,33 @@ custom top-level tags that the user will be prompted to fill in (to allow you
 to set tags like 'location:' 'task:' 'project:' etc that you can fill in and
 get a little more context about your tags 
 
-## First Steps
+## Installation
 
-First, I think we need to get the timing algorythm down. I need to do a fair
-bit of reading through perl source (an unfamiliar language to me) and a little
-reading on the theory around tagtime to determine the best way to implement
-this in javascript. Once we have a reliable, configurable pinger then we can
-move forward
+### Requirements
+
+this has only been tested on osX
+
+* node.js
+* gvim
+
+### Instructions
+
+once node and gvim is installed, download this repositiory and 
+
+```
+node index.js
+```
+
+in the project directory. After the first ping (you will need to exit gvim
+entirely) `log.json` will be written in the project root. This will contain
+a JSON string with timestamps as keys and the tags as values. 
+
+Tags will eventually be comma-separated, and scope will be defined with
+a colon. For example:
+
+```
+task:writing:readme, work:personal:tagtime.js
+```
+is what I would write if I had been 'pinged' during writing this - denoting
+I was performing a task, which involved writing, and the thing I was writing
+was a readme. This information is not currently used, but it will be eventually
