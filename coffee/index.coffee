@@ -1,8 +1,10 @@
 fs      = require 'fs'
 os      = require 'os'
 path    = require 'path'
+moment  = require 'moment'
 Pings   = require './src/pings'
 {spawn} = require 'child_process'
+_       = require 'underscore'
 
 touch = (filename, done) ->
     fs.open filename, 'w', (error, fd) ->
@@ -40,30 +42,40 @@ fs.readFile './config/tagtime.json', (error, buffer) ->
                     console.error error
                     return process.exit 1
                 else
-                    gvim = spawn 'gvim', ['-f', '--', tmpfile]
+                    write tmpfile, "##{moment.unix(now).format('ddd HH:mm:ss')}\n", ->
+                        gvim = spawn 'gvim', ['-f', '--', tmpfile]
 
-                    gvim.on 'close', ->
-                        fs.readFile tmpfile, (error, data) ->
-                            log = './log.json'
+                        fs.watch tmpfile,  ->
+                            fs.readFile tmpfile, (error, data) ->
+                                stripComments = (data) ->
+                                    if data
+                                        strdata = data.toString()
+                                        lines   = strdata.split '\n'
+                                        newdata = _(lines).reject (l) ->
+                                            return l[0] == '#'
+                                        return newdata.join()
+                                    else
+                                        return ''
 
-                            delTmpfile = ->
-                                fs.unlink tmpfile
+                                log = './log.json'
+                                writeLog = (data) ->
+                                    fs.readFile log, (error, logdata) ->
+                                        unless error
+                                            if logdata.length > 0
+                                                logJSON = JSON.parse logdata.toString()
+                                            else
+                                                logJSON = {}
+                                            logJSON[now] = data.toString()
+                                            newData = JSON.stringify(logJSON)
+                                            write log, newData, ->
 
-                            writeLog = ->
-                                fs.readFile log, (error, logdata) ->
-                                    unless error
-                                        if logdata.length > 0
-                                            logJSON = JSON.parse logdata.toString()
-                                        else
-                                            logJSON = {}
-                                        logJSON[now] = data.toString()
-                                        newData = JSON.stringify(logJSON)
-                                        write log, newData, ->
-                                            delTmpfile()
+                                if isFile log
+                                    nData = stripComments data
+                                    writeLog nData
+                                else
+                                    touch log, ->
+                                        nData = stripComments data
+                                        writeLog nData
 
-                            if isFile log
-                                writeLog()
-                            else
-                                touch log, ->
-                                    writeLog()
-
+                        gvim.on 'close', ->
+                            fs.unlink tmpfile

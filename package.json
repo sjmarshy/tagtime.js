@@ -25,7 +25,8 @@
     "npmlog": "^0.1.1",
     "coffee-script": "^1.7.1",
     "gulp": "^3.8.6",
-    "mersenne": "0.0.3"
+    "mersenne": "0.0.3",
+    "underscore": "^1.6.0"
   },
   "devDependencies": {
     "gulp-coffee": "^2.1.1"

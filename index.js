@@ -1,5 +1,5 @@
 (function() {
-  var Pings, fs, isFile, os, path, spawn, touch, write;
+  var Pings, fs, isFile, moment, os, path, spawn, touch, write, _;
 
   fs = require('fs');
 
@@ -7,9 +7,13 @@
 
   path = require('path');
 
+  moment = require('moment');
+
   Pings = require('./src/pings');
 
   spawn = require('child_process').spawn;
+
+  _ = require('underscore');
 
   touch = function(filename, done) {
     return fs.open(filename, 'w', function(error, fd) {
@@ -48,43 +52,58 @@
         var tmpfile;
         tmpfile = path.join(os.tmpdir(), "ping-" + now);
         return touch(tmpfile, function(error) {
-          var gvim;
           if (error) {
             console.error(error);
             return process.exit(1);
           } else {
-            gvim = spawn('gvim', ['-f', '--', tmpfile]);
-            return gvim.on('close', function() {
-              return fs.readFile(tmpfile, function(error, data) {
-                var delTmpfile, log, writeLog;
-                log = './log.json';
-                delTmpfile = function() {
-                  return fs.unlink(tmpfile);
-                };
-                writeLog = function() {
-                  return fs.readFile(log, function(error, logdata) {
-                    var logJSON, newData;
-                    if (!error) {
-                      if (logdata.length > 0) {
-                        logJSON = JSON.parse(logdata.toString());
-                      } else {
-                        logJSON = {};
-                      }
-                      logJSON[now] = data.toString();
-                      newData = JSON.stringify(logJSON);
-                      return write(log, newData, function() {
-                        return delTmpfile();
+            return write(tmpfile, "#" + (moment.unix(now).format('ddd HH:mm:ss')) + "\n", function() {
+              var gvim;
+              gvim = spawn('gvim', ['-f', '--', tmpfile]);
+              fs.watch(tmpfile, function() {
+                return fs.readFile(tmpfile, function(error, data) {
+                  var log, nData, stripComments, writeLog;
+                  stripComments = function(data) {
+                    var lines, newdata, strdata;
+                    if (data) {
+                      strdata = data.toString();
+                      lines = strdata.split('\n');
+                      newdata = _(lines).reject(function(l) {
+                        return l[0] === '#';
                       });
+                      return newdata.join();
+                    } else {
+                      return '';
                     }
-                  });
-                };
-                if (isFile(log)) {
-                  return writeLog();
-                } else {
-                  return touch(log, function() {
-                    return writeLog();
-                  });
-                }
+                  };
+                  log = './log.json';
+                  writeLog = function(data) {
+                    return fs.readFile(log, function(error, logdata) {
+                      var logJSON, newData;
+                      if (!error) {
+                        if (logdata.length > 0) {
+                          logJSON = JSON.parse(logdata.toString());
+                        } else {
+                          logJSON = {};
+                        }
+                        logJSON[now] = data.toString();
+                        newData = JSON.stringify(logJSON);
+                        return write(log, newData, function() {});
+                      }
+                    });
+                  };
+                  if (isFile(log)) {
+                    nData = stripComments(data);
+                    return writeLog(nData);
+                  } else {
+                    return touch(log, function() {
+                      nData = stripComments(data);
+                      return writeLog(nData);
+                    });
+                  }
+                });
+              });
+              return gvim.on('close', function() {
+                return fs.unlink(tmpfile);
               });
             });
           }
