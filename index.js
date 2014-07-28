@@ -56,12 +56,13 @@
             console.error(error);
             return process.exit(1);
           } else {
-            return write(tmpfile, "#" + (moment.unix(now).format('ddd HH:mm:ss')) + "\n", function() {
+            return write(tmpfile, "# " + (moment.unix(now).format('ddd HH:mm:ss')) + "\n", function() {
               var gvim;
               gvim = spawn('gvim', ['-f', '--', tmpfile]);
               fs.watch(tmpfile, function() {
                 return fs.readFile(tmpfile, function(error, data) {
                   var log, nData, stripComments, writeLog;
+                  log = './log.json';
                   stripComments = function(data) {
                     var lines, newdata, strdata;
                     if (data) {
@@ -75,7 +76,6 @@
                       return '';
                     }
                   };
-                  log = './log.json';
                   writeLog = function(data) {
                     return fs.readFile(log, function(error, logdata) {
                       var logJSON, newData;

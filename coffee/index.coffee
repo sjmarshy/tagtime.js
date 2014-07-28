@@ -42,11 +42,13 @@ fs.readFile './config/tagtime.json', (error, buffer) ->
                     console.error error
                     return process.exit 1
                 else
-                    write tmpfile, "##{moment.unix(now).format('ddd HH:mm:ss')}\n", ->
+                    write tmpfile, "# #{moment.unix(now).format('ddd HH:mm:ss')}\n", ->
                         gvim = spawn 'gvim', ['-f', '--', tmpfile]
 
                         fs.watch tmpfile,  ->
                             fs.readFile tmpfile, (error, data) ->
+                                log = './log.json'
+
                                 stripComments = (data) ->
                                     if data
                                         strdata = data.toString()
@@ -57,7 +59,7 @@ fs.readFile './config/tagtime.json', (error, buffer) ->
                                     else
                                         return ''
 
-                                log = './log.json'
+
                                 writeLog = (data) ->
                                     fs.readFile log, (error, logdata) ->
                                         unless error
