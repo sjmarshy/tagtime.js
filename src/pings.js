@@ -50,7 +50,7 @@
           if (now > _this.nxt) {
             _this.lst = _this.nxt;
             _this.nxt = _this.nextPing(_this.lst);
-            _this.emit('ping', now);
+            _this.emit('ping', _this.lst);
             return _this.log();
           }
         };
