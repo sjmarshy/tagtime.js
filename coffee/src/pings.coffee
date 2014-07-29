@@ -46,7 +46,7 @@ module.exports =
                     @lst = @nxt
                     @nxt = @nextPing @lst
 
-                    @emit('ping', now)
+                    @emit('ping', @lst)
 
                     @log()
             , 1000
