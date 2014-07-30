@@ -17,17 +17,28 @@ fs.readFile './config/tagtime.json', (error, buffer) ->
         logger = new Logger './log.json'
         logger.createLog()
 
+
         pinger.start()
 
         pinger.on 'ping', (now) ->
             tmpfile = path.join os.tmpdir(), "ping-#{now}"
+
+            popular = logger.getMostPopular()
 
             Logger.touch tmpfile, (error) ->
                 if error
                     console.error error
                     return process.exit 1
                 else
-                    Logger.write tmpfile, "\n\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n", ->
+                    tmpString = "\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n"
+                    popularString = _(popular).reduce (mem, val, key) ->
+                        if val > 5
+                            return mem + "\n##{key}:"
+                        else
+                            return mem
+                    , tmpString
+                    
+                    Logger.write tmpfile, popularString, ->
                         gvim = spawn 'gvim', ['-f', '--', tmpfile]
 
                         watcher = fs.watch tmpfile,  ->

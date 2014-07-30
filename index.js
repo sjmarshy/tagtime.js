@@ -29,14 +29,24 @@
       logger.createLog();
       pinger.start();
       return pinger.on('ping', function(now) {
-        var tmpfile;
+        var popular, tmpfile;
         tmpfile = path.join(os.tmpdir(), "ping-" + now);
+        popular = logger.getMostPopular();
         return Logger.touch(tmpfile, function(error) {
+          var popularString, tmpString;
           if (error) {
             console.error(error);
             return process.exit(1);
           } else {
-            return Logger.write(tmpfile, "\n\n# " + (moment.unix(now).format('ddd HH:mm:ss')) + "\n", function() {
+            tmpString = "\n# " + (moment.unix(now).format('ddd HH:mm:ss')) + "\n";
+            popularString = _(popular).reduce(function(mem, val, key) {
+              if (val > 5) {
+                return mem + ("\n#" + key + ":");
+              } else {
+                return mem;
+              }
+            }, tmpString);
+            return Logger.write(tmpfile, popularString, function() {
               var gvim, watcher;
               gvim = spawn('gvim', ['-f', '--', tmpfile]);
               watcher = fs.watch(tmpfile, function() {

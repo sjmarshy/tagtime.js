@@ -1,6 +1,62 @@
 fs = require 'fs'
 _  = require 'underscore'
 
+class Tag
+    @makeChild: (parent, child) ->
+        parent.children = [];
+        parent.children.push child
+
+    constructor: (@name, @children) ->
+    getChild: (name) ->
+        return _(@children).map (c) ->
+            if c.name == name
+                return c
+            else
+                return c.getChild name
+
+class Record
+    @parseTags: (tags) ->
+        clean_tags = tags.trim()
+
+        unless clean_tags
+            return null
+
+        tags_a = clean_tags.split ','
+
+        tags_a_i = _(tags_a).map (t) ->
+            unless t.indexOf(':') == -1
+                heirarchy_a = t.split ':'
+
+                tag_h_a = _(heirarchy_a).reduce (memo, value, n, a) ->
+                    getDeepestChild = (tag) ->
+                        if tag.children[0].children
+                            return getDeepestChild tag.children[0]
+                        else
+                            return tag.children[0] || tag
+
+                    unless memo.children
+                        p = new Tag memo
+                        c = new Tag value
+                        p.children = [c]
+
+                        return p
+                    else
+                        t = getDeepestChild memo
+                        t.children = [new Tag value]
+                        return memo
+
+                return tag_h_a
+            else
+                return new Tag t
+
+        return tags_a_i
+
+    constructor: (@time, tags) ->
+        @tags = Record.parseTags tags
+    getTopLevelTags: ->
+        return _(@tags).map (t) ->
+            return t.name
+
 module.exports =
     class Logger
         @handleError: (error) ->
@@ -24,7 +80,14 @@ module.exports =
                     done()
 
         @read: (fname, done) ->
-            fs.readFile fname, done
+            fs.readFile fname, (error, data) ->
+                unless error
+                    if data.length > 0
+                        done JSON.parse data.toString()
+                    else
+                        done {}
+                else
+                    Logger.handleError error
 
         @stripComments: (data) ->
             lines = data.split '\n'
@@ -34,24 +97,44 @@ module.exports =
             return newdata.join(' ')
 
         constructor: (@logfile) ->
+            @buildRecords()
+
+        buildRecords: ->
+            Logger.read @logfile, (log) =>
+                @records = _(log).map (tags, time) ->
+                    return new Record time, tags
+
+                @getMostPopular()
+
         writeLog: (data, now) ->
-           Logger.read @logfile, (error, log) =>
-                unless error
-                    if data.length > 0
-                        json = JSON.parse log.toString()
+           Logger.read @logfile, (log) =>
+                log[now] = data
+
+                newLog = JSON.stringify log
+                Logger.write @logfile, newLog, (error) =>
+                    if error
+                        Logger.handleError error
                     else
-                        json = {}
+                        @buildRecords()
+        getMostPopular: ->
+            count = {}
 
-                    json[now] = data
+            tags = _(@records).map (r) ->
+                return r.getTopLevelTags()
 
-                    newLog = JSON.stringify json
-                    Logger.write @logfile, newLog, (error) ->
-                        if error
-                            Logger.handleError error
+            sorted = _.chain(tags).flatten().sortBy (t) ->
+                return t
+            .map (t) ->
+                return t.trim()
+            .value()
 
-
+            _(sorted).each (t) ->
+                if count[t]
+                    count[t]++
                 else
-                    Logger.handleError error
+                    count[t] = 1
+
+            return count
 
 
         createLog: ->
