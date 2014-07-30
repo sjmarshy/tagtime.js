@@ -58,7 +58,7 @@ class Record
             return t.name
 
 module.exports =
-    class Logger
+    class Logfile
         @handleError: (error) ->
             console.error error
             process.exit 1
@@ -87,7 +87,7 @@ module.exports =
                     else
                         done {}
                 else
-                    Logger.handleError error
+                    Logfile.handleError error
 
         @stripComments: (data) ->
             lines = data.split '\n'
@@ -100,20 +100,20 @@ module.exports =
             @buildRecords()
 
         buildRecords: ->
-            Logger.read @logfile, (log) =>
+            Logfile.read @logfile, (log) =>
                 @records = _(log).map (tags, time) ->
                     return new Record time, tags
 
                 @getMostPopular()
 
         writeLog: (data, now) ->
-           Logger.read @logfile, (log) =>
+           Logfile.read @logfile, (log) =>
                 log[now] = data
 
                 newLog = JSON.stringify log
-                Logger.write @logfile, newLog, (error) =>
+                Logfile.write @logfile, newLog, (error) =>
                     if error
-                        Logger.handleError error
+                        Logfile.handleError error
                     else
                         @buildRecords()
         getMostPopular: ->
@@ -138,9 +138,9 @@ module.exports =
 
 
         createLog: ->
-            unless Logger.isFile @logfile
-                Logger.touch @logfile, (error) ->
+            unless Logfile.isFile @logfile
+                Logfile.touch @logfile, (error) ->
                     if error
-                        Logger.handleError error
+                        Logfile.handleError error
 
 
