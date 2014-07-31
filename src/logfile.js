@@ -1,7 +1,9 @@
 (function() {
-  var Logfile, Record, Tag, fs, _;
+  var Logfile, Record, Tag, fs, q, _;
 
   fs = require('fs');
+
+  q = require('q');
 
   _ = require('underscore');
 
@@ -146,10 +148,9 @@
     Logfile.prototype.buildRecords = function() {
       return Logfile.read(this.logfile, (function(_this) {
         return function(log) {
-          _this.records = _(log).map(function(tags, time) {
+          return _this.records = _(log).map(function(tags, time) {
             return new Record(time, tags);
           });
-          return _this.getMostPopular();
         };
       })(this));
     };
@@ -171,7 +172,65 @@
       })(this));
     };
 
+    Logfile.prototype.getTagsAsTree = function() {
+      var tagTree, walk;
+      tagTree = {};
+      walk = function(tag, tree) {
+        var n, t;
+        n = tag.name;
+        if (!tree[n]) {
+          tree[n] = {};
+        }
+        t = tree[n];
+        if (tag.children && tag.children.length > 0) {
+          return _(tag.children).each(function(child) {
+            return walk(child, t);
+          });
+        } else {
+          return t = null;
+        }
+      };
+      _(this.records).each(function(r) {
+        if (r.tags && r.tags.length > 0) {
+          return _(r.tags).forEach(function(tag) {
+            return walk(tag, tagTree);
+          });
+        }
+      });
+      return tagTree;
+    };
+
+    Logfile.prototype.getTagsAsList = function() {
+      var getKeys, keys, tags;
+      tags = this.getTagsAsTree();
+      keys = [];
+      getKeys = function(tags) {
+        keys.push(_(tags).keys());
+        return _(keys).each(function(k) {
+          if (tags[k]) {
+            return getKeys(tags[k]);
+          }
+        });
+      };
+      getKeys(tags);
+      return _(keys).flatten();
+    };
+
     Logfile.prototype.getMostPopular = function() {
+      var cache, tags;
+      tags = this.getTagsAsList();
+      cache = {};
+      _(tags).each(function(tag) {
+        if (!cache[tag]) {
+          return cache[tag] = 1;
+        } else {
+          return cache[tag]++;
+        }
+      });
+      return cache;
+    };
+
+    Logfile.prototype.getMostPopularTopLevel = function() {
       var count, sorted, tags;
       count = {};
       tags = _(this.records).map(function(r) {
