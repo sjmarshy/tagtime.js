@@ -1,4 +1,4 @@
-hapi    = require 'hapi'
+Hapi    = require 'hapi'
 q       = require 'q'
 fs      = require 'fs'
 os      = require 'os'
@@ -8,6 +8,8 @@ Pings   = require './src/pings'
 Logfile = require './src/logfile'
 {spawn} = require 'child_process'
 _       = require 'underscore'
+
+server = new Hapi.Server 3891
 
 getConfig = (fname) ->
     d = q.defer();
@@ -25,6 +27,7 @@ handleError = (error) ->
     console.error error
     process.exit 1
 
+
 getPopularBreakdown = (popular) ->
     breakdown = "# Popular top-level tags"
     return _(popular).reduce (memo, value, key) ->
@@ -34,6 +37,38 @@ getPopularBreakdown = (popular) ->
             return memo
     , breakdown
 
+getAllPopularString = (log) ->
+    counts = log.getMostPopular()
+    string = "# all popular tags"
+    return _(counts).reduce (memo, value, key) ->
+        if value > 5
+            return memo + "\n#    #{key}(#{value})"
+        else
+            return memo
+    , string
+
+
+api = (server, logfile) ->
+    server.route
+        method: 'GET'
+        path: '/tags/popularity'
+        handler: (req, res) ->
+            res logfile.getMostPopular()
+
+    server.route
+        method: 'GET'
+        path: '/tags'
+        handler: (req, res) ->
+            res logfile.getTagsAsTree()
+
+    server.route
+        method: 'GET'
+        path: '/tags/flat'
+        handler: (req, res) ->
+            res logfile.getTagsAsList()
+
+    server.start()
+
 getConfig './config/tagtime.json'
 .then (config) ->
     pinger = new Pings config.frequency
@@ -41,10 +76,12 @@ getConfig './config/tagtime.json'
     logfile = new Logfile './log.json'
     logfile.createLog()
 
+    api server, logfile
+
     pinger.start()
     pinger.on 'ping', (now) ->
         tmpfile = path.join os.tmpdir(), "ping-#{now}"
-        popular = logfile.getMostPopular()
+        popular = logfile.getMostPopularTopLevel()
 
         Logfile.touch tmpfile, (error) ->
             if error
@@ -52,6 +89,7 @@ getConfig './config/tagtime.json'
             else
                 tmpString  = "\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n"
                 tmpString += getPopularBreakdown popular
+                tmpString += getAllPopularString()
 
                 Logfile.write tmpfile, tmpString, ->
                     gvim = spawn 'gvim', ['-f', '--', tmpfile]
