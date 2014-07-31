@@ -1,58 +1,108 @@
+Hapi    = require 'hapi'
+q       = require 'q'
 fs      = require 'fs'
 os      = require 'os'
 path    = require 'path'
 moment  = require 'moment'
 Pings   = require './src/pings'
-Logfile  = require './src/logfile'
+Logfile = require './src/logfile'
 {spawn} = require 'child_process'
 _       = require 'underscore'
+
+server = new Hapi.Server 3891
+
+getConfig = (fname) ->
+    d = q.defer();
+
+    fs.readFile fname, (error, buffer) ->
+        if error
+            d.reject error
+        else
+            d.resolve JSON.parse buffer.toString()
+
+    return d.promise
+
 
 handleError = (error) ->
     console.error error
     process.exit 1
 
-fs.readFile './config/tagtime.json', (error, buffer) ->
-    if error
-        handleError error
-    else
-        config = JSON.parse buffer.toString()
 
-        pinger = new Pings config.frequency
+getPopularBreakdown = (popular) ->
+    breakdown = "# Popular top-level tags"
+    return _(popular).reduce (memo, value, key) ->
+        if value > 5
+            return memo + "\n#    #{key}"
+        else
+            return memo
+    , breakdown
 
-        logfile = new Logfile './log.json'
-        logfile.createLog()
+getAllPopularString = (log) ->
+    counts = log.getMostPopular()
+    string = "# all popular tags"
+    return _(counts).reduce (memo, value, key) ->
+        if value > 5
+            return memo + "\n#    #{key}(#{value})"
+        else
+            return memo
+    , string
 
-        pinger.start()
 
-        pinger.on 'ping', (now) ->
-            tmpfile = path.join os.tmpdir(), "ping-#{now}"
+api = (server, logfile) ->
+    server.route
+        method: 'GET'
+        path: '/tags/popularity'
+        handler: (req, res) ->
+            res logfile.getMostPopular()
 
-            popular = logfile.getMostPopular()
+    server.route
+        method: 'GET'
+        path: '/tags'
+        handler: (req, res) ->
+            res logfile.getTagsAsTree()
 
-            Logfile.touch tmpfile, (error) ->
-                if error
-                    handleError error
-                else
-                    tmpString = "\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n"
-                    tmpString += "# popular top-level tags:"
-                    popularString = _(popular).reduce (mem, val, key) ->
-                        if val > 5
-                            return mem + "\n##{key}:"
-                        else
-                            return mem
-                    , tmpString
+    server.route
+        method: 'GET'
+        path: '/tags/flat'
+        handler: (req, res) ->
+            res logfile.getTagsAsList()
 
-                    Logfile.write tmpfile, popularString, ->
-                        gvim = spawn 'gvim', ['-f', '--', tmpfile]
+    server.start()
 
-                        watcher = fs.watch tmpfile,  ->
-                            fs.readFile tmpfile, (error, data) ->
-                                if data
-                                    data = data.toString()
-                                    logfile.writeLog Logfile.stripComments(data), now
+getConfig './config/tagtime.json'
+.then (config) ->
+    pinger = new Pings config.frequency
 
-                        watcher.on 'change', ->
-                            watcher.close()
+    logfile = new Logfile './log.json'
+    logfile.createLog()
 
-                        gvim.on 'close', ->
-                            fs.unlink tmpfile
+    api server, logfile
+
+    pinger.start()
+    pinger.on 'ping', (now) ->
+        tmpfile = path.join os.tmpdir(), "ping-#{now}"
+        popular = logfile.getMostPopularTopLevel()
+
+        Logfile.touch tmpfile, (error) ->
+            if error
+                handleError error
+            else
+                tmpString  = "\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n"
+                tmpString += getPopularBreakdown popular
+                tmpString += getAllPopularString()
+
+                Logfile.write tmpfile, tmpString, ->
+                    gvim = spawn 'gvim', ['-f', '--', tmpfile]
+
+                    watcher = fs.watch tmpfile,  ->
+                        fs.readFile tmpfile, (error, data) ->
+                            if data
+                                data = data.toString()
+                                logfile.writeLog Logfile.stripComments(data), now
+
+                    watcher.on 'change', ->
+                        watcher.close()
+
+                    gvim.on 'close', ->
+                        fs.unlink tmpfile
+.catch handleError

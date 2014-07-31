@@ -1,4 +1,5 @@
 fs = require 'fs'
+q  = require 'q'
 _  = require 'underscore'
 
 class Tag
@@ -16,6 +17,7 @@ class Tag
 
 class Record
     @parseTags: (tags) ->
+        # this...requires work
         clean_tags = tags.trim()
 
         unless clean_tags
@@ -104,8 +106,6 @@ module.exports =
                 @records = _(log).map (tags, time) ->
                     return new Record time, tags
 
-                @getMostPopular()
-
         writeLog: (data, now) ->
            Logfile.read @logfile, (log) =>
                 log[now] = data
@@ -116,7 +116,59 @@ module.exports =
                         Logfile.handleError error
                     else
                         @buildRecords()
+        getTagsAsTree: ->
+            tagTree = {}
+
+            walk = (tag, tree) ->
+                n = tag.name
+
+                unless tree[n]
+                    tree[n] = {}
+
+                t = tree[n]
+
+                if tag.children && tag.children.length > 0
+                    _(tag.children).each (child) ->
+                        walk child, t
+                else
+                    t = null
+
+            _(@records).each (r) ->
+                if r.tags && r.tags.length > 0
+                    _(r.tags).forEach (tag) ->
+                        walk tag, tagTree
+
+            return tagTree
+
+        getTagsAsList: ->
+            tags = @getTagsAsTree()
+            keys = []
+
+            getKeys = (tags) ->
+                keys.push _(tags).keys()
+
+                _(keys).each (k) ->
+                    if tags[k]
+                        getKeys tags[k]
+
+            getKeys tags
+
+            return _(keys).flatten()
+
         getMostPopular: ->
+            tags  = @getTagsAsList()
+            cache = {}
+
+            _(tags).each (tag) ->
+                unless cache[tag]
+                    cache[tag] = 1
+                else
+                    cache[tag]++
+
+            return cache
+
+
+        getMostPopularTopLevel: ->
             count = {}
 
             tags = _(@records).map (r) ->
