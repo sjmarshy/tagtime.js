@@ -217,17 +217,28 @@
     };
 
     Logfile.prototype.getMostPopular = function() {
-      var cache, tags;
-      tags = this.getTagsAsList();
-      cache = {};
-      _(tags).each(function(tag) {
-        if (!cache[tag]) {
-          return cache[tag] = 1;
+      var tags;
+      tags = _.chain(this.records).map(function(r) {
+        return r.tags;
+      }).flatten().map(function(t) {
+        if (t) {
+          return t.name;
+        }
+      }).value();
+      return this.count(tags);
+    };
+
+    Logfile.prototype.count = function(arr) {
+      var count;
+      count = {};
+      _(arr).each(function(e) {
+        if (count[e]) {
+          return count[e]++;
         } else {
-          return cache[tag]++;
+          return count[e] = 1;
         }
       });
-      return cache;
+      return count;
     };
 
     Logfile.prototype.getMostPopularTopLevel = function() {
@@ -241,14 +252,7 @@
       }).map(function(t) {
         return t.trim();
       }).value();
-      _(sorted).each(function(t) {
-        if (count[t]) {
-          return count[t]++;
-        } else {
-          return count[t] = 1;
-        }
-      });
-      return count;
+      return this.count(tags);
     };
 
     Logfile.prototype.createLog = function() {
