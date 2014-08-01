@@ -156,17 +156,25 @@ module.exports =
             return _(keys).flatten()
 
         getMostPopular: ->
-            tags  = @getTagsAsList()
-            cache = {}
+            tags = _.chain(@records).map (r) ->
+                return r.tags
+            .flatten()
+            .map (t) ->
+                if t
+                    return t.name
+            .value()
 
-            _(tags).each (tag) ->
-                unless cache[tag]
-                    cache[tag] = 1
+            return @count tags
+
+        count: (arr) ->
+            count = {}
+            _(arr).each (e) ->
+                if count[e]
+                    count[e]++
                 else
-                    cache[tag]++
+                    count[e] = 1
 
-            return cache
-
+            return count
 
         getMostPopularTopLevel: ->
             count = {}
@@ -180,13 +188,8 @@ module.exports =
                 return t.trim()
             .value()
 
-            _(sorted).each (t) ->
-                if count[t]
-                    count[t]++
-                else
-                    count[t] = 1
 
-            return count
+            return @count tags
 
 
         createLog: ->
