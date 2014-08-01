@@ -109,7 +109,7 @@
         } else {
           tmpString = "\n# " + (moment.unix(now).format('ddd HH:mm:ss')) + "\n";
           tmpString += getPopularBreakdown(popular);
-          tmpString += getAllPopularString();
+          tmpString += getAllPopularString(logfile);
           return Logfile.write(tmpfile, tmpString, function() {
             var gvim, watcher;
             gvim = spawn('gvim', ['-f', '--', tmpfile]);

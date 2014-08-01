@@ -89,7 +89,7 @@ getConfig './config/tagtime.json'
             else
                 tmpString  = "\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n"
                 tmpString += getPopularBreakdown popular
-                tmpString += getAllPopularString()
+                tmpString += getAllPopularString(logfile)
 
                 Logfile.write tmpfile, tmpString, ->
                     gvim = spawn 'gvim', ['-f', '--', tmpfile]
