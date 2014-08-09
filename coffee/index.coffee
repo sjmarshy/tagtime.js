@@ -39,7 +39,7 @@ getPopularBreakdown = (popular) ->
 
 getAllPopularString = (log) ->
     counts = log.getMostPopular()
-    string = "# all popular tags"
+    string = "\n# all popular tags"
     return _(counts).reduce (memo, value, key) ->
         if value > 5
             return memo + "\n#    #{key}(#{value})"

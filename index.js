@@ -56,7 +56,7 @@
   getAllPopularString = function(log) {
     var counts, string;
     counts = log.getMostPopular();
-    string = "# all popular tags";
+    string = "\n# all popular tags";
     return _(counts).reduce(function(memo, value, key) {
       if (value > 5) {
         return memo + ("\n#    " + key + "(" + value + ")");
