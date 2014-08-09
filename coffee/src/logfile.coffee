@@ -8,12 +8,39 @@ class Tag
         parent.children.push child
 
     constructor: (@name, @children) ->
+        unless @children
+            @children = []
+
     getChild: (name) ->
         return _(@children).map (c) ->
             if c.name == name
                 return c
             else
                 return c.getChild name
+
+    getChildren: ->
+        return @chidren
+
+    getChildrenNames: ->
+        _(@children).map (c) ->
+            return c.name
+
+    getProgeny: ->
+        progeny = []
+
+        walk = (tag) ->
+            progeny.push tag
+            _(tag.getChildren).each (c) ->
+                walk (c)
+
+        _(@children).each (c) ->
+            walk c
+
+        return _(progeny).flatten()
+
+    getProgenyNames: ->
+        _(@getProgeny()).map (p) ->
+            return p.name
 
 class Record
     @parseTags: (tags) ->
@@ -31,7 +58,7 @@ class Record
 
                 tag_h_a = _(heirarchy_a).reduce (memo, value, n, a) ->
                     getDeepestChild = (tag) ->
-                        if tag.children[0].children
+                        if tag.children && tag.children[0] &&  tag.children[0].children
                             return getDeepestChild tag.children[0]
                         else
                             return tag.children[0] || tag
@@ -58,6 +85,10 @@ class Record
     getTopLevelTags: ->
         return _(@tags).map (t) ->
             return t.name
+    getTags: ->
+        _.chain(@tags).map (t) ->
+            return t.getProgenyNames()
+        .flatten().value()
 
 module.exports =
     class Logfile
@@ -140,20 +171,20 @@ module.exports =
 
             return tagTree
 
+        getTagsAsDetailTree: ->
+            detailTree = {}
+            counts     = @getMostPopular()
+            tree       = @getTagsAsTree()
+
         getTagsAsList: ->
-            tags = @getTagsAsTree()
-            keys = []
+            _.chain(@records).map (r) ->
+                return r.getTags()
+            .flatten().compact().value()
 
-            getKeys = (tags) ->
-                keys.push _(tags).keys()
-
-                _(keys).each (k) ->
-                    if tags[k]
-                        getKeys tags[k]
-
-            getKeys tags
-
-            return _(keys).flatten()
+        getTagsAsUniqueList: ->
+            _.chain(@records).map (r) ->
+                return r.getTags()
+            .flatten().compact().uniq().value()
 
         getMostPopular: ->
             tags = _.chain(@records).map (r) ->

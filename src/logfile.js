@@ -16,6 +16,9 @@
     function Tag(name, children) {
       this.name = name;
       this.children = children;
+      if (!this.children) {
+        this.children = [];
+      }
     }
 
     Tag.prototype.getChild = function(name) {
@@ -25,6 +28,37 @@
         } else {
           return c.getChild(name);
         }
+      });
+    };
+
+    Tag.prototype.getChildren = function() {
+      return this.chidren;
+    };
+
+    Tag.prototype.getChildrenNames = function() {
+      return _(this.children).map(function(c) {
+        return c.name;
+      });
+    };
+
+    Tag.prototype.getProgeny = function() {
+      var progeny, walk;
+      progeny = [];
+      walk = function(tag) {
+        progeny.push(tag);
+        return _(tag.getChildren).each(function(c) {
+          return walk(c);
+        });
+      };
+      _(this.children).each(function(c) {
+        return walk(c);
+      });
+      return _(progeny).flatten();
+    };
+
+    Tag.prototype.getProgenyNames = function() {
+      return _(this.getProgeny()).map(function(p) {
+        return p.name;
       });
     };
 
@@ -47,7 +81,7 @@
           tag_h_a = _(heirarchy_a).reduce(function(memo, value, n, a) {
             var c, getDeepestChild, p;
             getDeepestChild = function(tag) {
-              if (tag.children[0].children) {
+              if (tag.children && tag.children[0] && tag.children[0].children) {
                 return getDeepestChild(tag.children[0]);
               } else {
                 return tag.children[0] || tag;
@@ -81,6 +115,12 @@
       return _(this.tags).map(function(t) {
         return t.name;
       });
+    };
+
+    Record.prototype.getTags = function() {
+      return _.chain(this.tags).map(function(t) {
+        return t.getProgenyNames();
+      }).flatten().value();
     };
 
     return Record;
@@ -200,20 +240,23 @@
       return tagTree;
     };
 
+    Logfile.prototype.getTagsAsDetailTree = function() {
+      var counts, detailTree, tree;
+      detailTree = {};
+      counts = this.getMostPopular();
+      return tree = this.getTagsAsTree();
+    };
+
     Logfile.prototype.getTagsAsList = function() {
-      var getKeys, keys, tags;
-      tags = this.getTagsAsTree();
-      keys = [];
-      getKeys = function(tags) {
-        keys.push(_(tags).keys());
-        return _(keys).each(function(k) {
-          if (tags[k]) {
-            return getKeys(tags[k]);
-          }
-        });
-      };
-      getKeys(tags);
-      return _(keys).flatten();
+      return _.chain(this.records).map(function(r) {
+        return r.getTags();
+      }).flatten().compact().value();
+    };
+
+    Logfile.prototype.getTagsAsUniqueList = function() {
+      return _.chain(this.records).map(function(r) {
+        return r.getTags();
+      }).flatten().compact().uniq().value();
     };
 
     Logfile.prototype.getMostPopular = function() {
