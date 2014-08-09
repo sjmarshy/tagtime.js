@@ -32,7 +32,7 @@
     };
 
     Tag.prototype.getChildren = function() {
-      return this.chidren;
+      return this.children;
     };
 
     Tag.prototype.getChildrenNames = function() {
@@ -46,7 +46,7 @@
       progeny = [];
       walk = function(tag) {
         progeny.push(tag);
-        return _(tag.getChildren).each(function(c) {
+        return _(tag.getChildren()).each(function(c) {
           return walk(c);
         });
       };
@@ -260,15 +260,7 @@
     };
 
     Logfile.prototype.getMostPopular = function() {
-      var tags;
-      tags = _.chain(this.records).map(function(r) {
-        return r.tags;
-      }).flatten().map(function(t) {
-        if (t) {
-          return t.name;
-        }
-      }).value();
-      return this.count(tags);
+      return this.count(this.getTagsAsList());
     };
 
     Logfile.prototype.count = function(arr) {

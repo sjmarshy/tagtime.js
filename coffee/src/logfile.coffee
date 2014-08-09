@@ -19,7 +19,7 @@ class Tag
                 return c.getChild name
 
     getChildren: ->
-        return @chidren
+        return @children
 
     getChildrenNames: ->
         _(@children).map (c) ->
@@ -30,7 +30,7 @@ class Tag
 
         walk = (tag) ->
             progeny.push tag
-            _(tag.getChildren).each (c) ->
+            _(tag.getChildren()).each (c) ->
                 walk (c)
 
         _(@children).each (c) ->
@@ -187,15 +187,7 @@ module.exports =
             .flatten().compact().uniq().value()
 
         getMostPopular: ->
-            tags = _.chain(@records).map (r) ->
-                return r.tags
-            .flatten()
-            .map (t) ->
-                if t
-                    return t.name
-            .value()
-
-            return @count tags
+            return @count @getTagsAsList()
 
         count: (arr) ->
             count = {}
