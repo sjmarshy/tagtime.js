@@ -56,7 +56,7 @@
   getAllPopularString = function(log) {
     var counts, string;
     counts = log.getMostPopular();
-    string = "# all popular tags";
+    string = "\n# all popular tags";
     return _(counts).reduce(function(memo, value, key) {
       if (value > 5) {
         return memo + ("\n#    " + key + "(" + value + ")");
@@ -71,43 +71,54 @@
     getLast = function(req, res) {
       return res(pinger.lst);
     };
-    server.route({
-      method: 'GET',
-      path: '/tags/popularity',
-      handler: function(req, res) {
-        return res(logfile.getMostPopular());
-      }
-    });
-    server.route({
-      method: 'GET',
-      path: '/tags',
-      handler: function(req, res) {
-        return res(logfile.getTagsAsTree());
-      }
-    });
-    server.route({
-      method: 'GET',
-      path: '/tags/flat',
-      handler: function(req, res) {
-        return res(logfile.getTagsAsList());
-      }
-    });
-    server.route({
-      method: 'GET',
-      path: '/time/next',
-      handler: function(req, res) {
-        return res(pinger.nxt);
-      }
-    });
     server.route([
       {
         method: 'GET',
-        path: '/time/prev',
+        path: '/api/tags/popularity',
+        handler: function(req, res) {
+          return res(logfile.getMostPopular());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsTree());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags/flat',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsUniqueList());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags/flat/raw',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsList());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags/detail',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsDetailTree());
+        }
+      }
+    ]);
+    server.route([
+      {
+        method: 'GET',
+        path: '/api/time/prev',
         handler: getLast
       }, {
         method: 'GET',
-        path: '/time/last',
+        path: '/api/time/last',
         handler: getLast
+      }, {
+        method: 'GET',
+        path: '/api/time/next',
+        handler: function(req, res) {
+          return res(pinger.nxt);
+        }
       }
     ]);
     return server.start();
