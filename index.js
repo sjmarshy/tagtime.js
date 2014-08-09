@@ -71,34 +71,39 @@
     getLast = function(req, res) {
       return res(pinger.lst);
     };
-    server.route({
-      method: 'GET',
-      path: '/api/tags/popularity',
-      handler: function(req, res) {
-        return res(logfile.getMostPopular());
+    server.route([
+      {
+        method: 'GET',
+        path: '/api/tags/popularity',
+        handler: function(req, res) {
+          return res(logfile.getMostPopular());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsTree());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags/flat',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsUniqueList());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags/flat/raw',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsList());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tags/detail',
+        handler: function(req, res) {
+          return res(logfile.getTagsAsDetailTree());
+        }
       }
-    });
-    server.route({
-      method: 'GET',
-      path: '/api/tags',
-      handler: function(req, res) {
-        return res(logfile.getTagsAsTree());
-      }
-    });
-    server.route({
-      method: 'GET',
-      path: '/api/tags/flat',
-      handler: function(req, res) {
-        return res(logfile.getTagsAsList());
-      }
-    });
-    server.route({
-      method: 'GET',
-      path: '/api/time/next',
-      handler: function(req, res) {
-        return res(pinger.nxt);
-      }
-    });
+    ]);
     server.route([
       {
         method: 'GET',
@@ -108,6 +113,12 @@
         method: 'GET',
         path: '/api/time/last',
         handler: getLast
+      }, {
+        method: 'GET',
+        path: '/api/time/next',
+        handler: function(req, res) {
+          return res(pinger.nxt);
+        }
       }
     ]);
     return server.start();
