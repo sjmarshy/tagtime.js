@@ -76,6 +76,7 @@
       tags_a = clean_tags.split(',');
       tags_a_i = _(tags_a).map(function(t) {
         var heirarchy_a, tag_h_a;
+        t = t.trim();
         if (t.indexOf(':') !== -1) {
           heirarchy_a = t.split(':');
           tag_h_a = _(heirarchy_a).reduce(function(memo, value, n, a) {

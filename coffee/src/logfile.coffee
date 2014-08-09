@@ -44,7 +44,6 @@ class Tag
 
 class Record
     @parseTags: (tags) ->
-        # this...requires work
         clean_tags = tags.trim()
 
         unless clean_tags
@@ -53,6 +52,7 @@ class Record
         tags_a = clean_tags.split ','
 
         tags_a_i = _(tags_a).map (t) ->
+            t = t.trim()
             unless t.indexOf(':') == -1
                 heirarchy_a = t.split ':'
 
