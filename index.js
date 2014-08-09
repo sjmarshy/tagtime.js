@@ -66,7 +66,11 @@
     }, string);
   };
 
-  api = function(server, logfile) {
+  api = function(server, logfile, pinger) {
+    var getLast;
+    getLast = function(req, res) {
+      return res(pinger.lst);
+    };
     server.route({
       method: 'GET',
       path: '/tags/popularity',
@@ -88,6 +92,24 @@
         return res(logfile.getTagsAsList());
       }
     });
+    server.route({
+      method: 'GET',
+      path: '/time/next',
+      handler: function(req, res) {
+        return res(pinger.nxt);
+      }
+    });
+    server.route([
+      {
+        method: 'GET',
+        path: '/time/prev',
+        handler: getLast
+      }, {
+        method: 'GET',
+        path: '/time/last',
+        handler: getLast
+      }
+    ]);
     return server.start();
   };
 
@@ -96,7 +118,7 @@
     pinger = new Pings(config.frequency);
     logfile = new Logfile('./log.json');
     logfile.createLog();
-    api(server, logfile);
+    api(server, logfile, pinger);
     pinger.start();
     return pinger.on('ping', function(now) {
       var popular, tmpfile;

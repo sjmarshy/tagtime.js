@@ -48,7 +48,10 @@ getAllPopularString = (log) ->
     , string
 
 
-api = (server, logfile) ->
+api = (server, logfile, pinger) ->
+    getLast = (req, res) ->
+        res pinger.lst
+
     server.route
         method: 'GET'
         path: '/tags/popularity'
@@ -67,6 +70,26 @@ api = (server, logfile) ->
         handler: (req, res) ->
             res logfile.getTagsAsList()
 
+    server.route
+        method: 'GET'
+        path: '/time/next'
+        handler: (req, res) ->
+            res pinger.nxt
+
+    server.route [
+        {
+        method: 'GET'
+        path: '/time/prev'
+        handler: getLast
+        }
+        {
+        method: 'GET'
+        path: '/time/last'
+        handler: getLast
+        }
+    ]
+
+
     server.start()
 
 getConfig './config/tagtime.json'
@@ -76,7 +99,7 @@ getConfig './config/tagtime.json'
     logfile = new Logfile './log.json'
     logfile.createLog()
 
-    api server, logfile
+    api server, logfile, pinger
 
     pinger.start()
     pinger.on 'ping', (now) ->
