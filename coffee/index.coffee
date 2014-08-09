@@ -54,37 +54,37 @@ api = (server, logfile, pinger) ->
 
     server.route
         method: 'GET'
-        path: '/tags/popularity'
+        path: '/api/tags/popularity'
         handler: (req, res) ->
             res logfile.getMostPopular()
 
     server.route
         method: 'GET'
-        path: '/tags'
+        path: '/api/tags'
         handler: (req, res) ->
             res logfile.getTagsAsTree()
 
     server.route
         method: 'GET'
-        path: '/tags/flat'
+        path: '/api/tags/flat'
         handler: (req, res) ->
             res logfile.getTagsAsList()
 
     server.route
         method: 'GET'
-        path: '/time/next'
+        path: '/api/time/next'
         handler: (req, res) ->
             res pinger.nxt
 
     server.route [
         {
         method: 'GET'
-        path: '/time/prev'
+        path: '/api/time/prev'
         handler: getLast
         }
         {
         method: 'GET'
-        path: '/time/last'
+        path: '/api/time/last'
         handler: getLast
         }
     ]
