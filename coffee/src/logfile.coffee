@@ -18,28 +18,28 @@ class Tag
             else
                 return c.getChild name
 
-    getChildren: ->
+    getDirectHeirs: ->
         return @children
 
-    getChildrenNames: ->
+    getDirectHeirsNames: ->
         _(@children).map (c) ->
             return c.name
 
-    getProgeny: ->
-        progeny = []
+    getHeirs: ->
+        heirs = []
 
         walk = (tag) ->
-            progeny.push tag
-            _(tag.getChildren()).each (c) ->
+            heirs.push tag
+            _(tag.getDirectHeirs()).each (c) ->
                 walk (c)
 
         _(@children).each (c) ->
             walk c
 
-        return _(progeny).flatten()
+        return _(heirs).flatten()
 
-    getProgenyNames: ->
-        _(@getProgeny()).map (p) ->
+    getHeirsNames: ->
+        _(@getHeirs()).map (p) ->
             return p.name
 
 class Record
@@ -87,7 +87,7 @@ class Record
             return t.name
     getTags: ->
         _.chain(@tags).map (t) ->
-            return t.getProgenyNames()
+            return t.getHeirsNames()
         .flatten().value()
 
 module.exports =

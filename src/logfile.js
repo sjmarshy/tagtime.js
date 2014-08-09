@@ -31,33 +31,33 @@
       });
     };
 
-    Tag.prototype.getChildren = function() {
+    Tag.prototype.getDirectHeirs = function() {
       return this.children;
     };
 
-    Tag.prototype.getChildrenNames = function() {
+    Tag.prototype.getDirectHeirsNames = function() {
       return _(this.children).map(function(c) {
         return c.name;
       });
     };
 
-    Tag.prototype.getProgeny = function() {
-      var progeny, walk;
-      progeny = [];
+    Tag.prototype.getHeirs = function() {
+      var heirs, walk;
+      heirs = [];
       walk = function(tag) {
-        progeny.push(tag);
-        return _(tag.getChildren()).each(function(c) {
+        heirs.push(tag);
+        return _(tag.getDirectHeirs()).each(function(c) {
           return walk(c);
         });
       };
       _(this.children).each(function(c) {
         return walk(c);
       });
-      return _(progeny).flatten();
+      return _(heirs).flatten();
     };
 
-    Tag.prototype.getProgenyNames = function() {
-      return _(this.getProgeny()).map(function(p) {
+    Tag.prototype.getHeirsNames = function() {
+      return _(this.getHeirs()).map(function(p) {
         return p.name;
       });
     };
@@ -120,7 +120,7 @@
 
     Record.prototype.getTags = function() {
       return _.chain(this.tags).map(function(t) {
-        return t.getProgenyNames();
+        return t.getHeirsNames();
       }).flatten().value();
     };
 
