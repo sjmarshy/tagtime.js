@@ -12,7 +12,7 @@ _       = require 'underscore'
 server = new Hapi.Server 3891
 
 getConfig = (fname) ->
-    d = q.defer();
+    d = q.defer()
 
     fs.readFile fname, (error, buffer) ->
         if error
