@@ -1,94 +1,7 @@
-fs = require 'fs'
-q  = require 'q'
-_  = require 'underscore'
-
-class Tag
-    @makeChild: (parent, child) ->
-        parent.children = [];
-        parent.children.push child
-
-    constructor: (@name, @children) ->
-        unless @children
-            @children = []
-
-    getChild: (name) ->
-        return _(@children).map (c) ->
-            if c.name == name
-                return c
-            else
-                return c.getChild name
-
-    getDirectHeirs: ->
-        return @children
-
-    getDirectHeirsNames: ->
-        _(@children).map (c) ->
-            return c.name
-
-    getHeirs: ->
-        heirs = []
-
-        walk = (tag) ->
-            heirs.push tag
-            _(tag.getDirectHeirs()).each (c) ->
-                walk (c)
-
-        _(@children).each (c) ->
-            walk c
-
-        return _(heirs).flatten()
-
-    getHeirsNames: ->
-        _(@getHeirs()).map (p) ->
-            return p.name
-
-class Record
-    @parseTags: (tags) ->
-        clean_tags = tags.trim()
-
-        unless clean_tags
-            return null
-
-        tags_a = clean_tags.split ','
-
-        tags_a_i = _(tags_a).map (t) ->
-            t = t.trim()
-            unless t.indexOf(':') == -1
-                heirarchy_a = t.split ':'
-
-                tag_h_a = _(heirarchy_a).reduce (memo, value, n, a) ->
-                    getDeepestChild = (tag) ->
-                        if tag.children && tag.children[0] &&  tag.children[0].children
-                            return getDeepestChild tag.children[0]
-                        else
-                            return tag.children[0] || tag
-
-                    unless memo.children
-                        p = new Tag memo
-                        c = new Tag value
-                        p.children = [c]
-
-                        return p
-                    else
-                        t = getDeepestChild memo
-                        t.children = [new Tag value]
-                        return memo
-
-                return tag_h_a
-            else
-                return new Tag t
-
-        return tags_a_i
-
-    constructor: (@time, tags) ->
-        @tags = Record.parseTags tags
-    getTopLevelTags: ->
-        return _(@tags).map (t) ->
-            return t.name
-    getTags: ->
-        _.chain(@tags).map (t) ->
-            return t.getHeirsNames()
-        .flatten().value()
+Record = require './record'
+fs     = require 'fs'
+q      = require 'q'
+_      = require 'underscore'
 
 module.exports =
     class Logfile
@@ -138,7 +51,7 @@ module.exports =
                     return new Record time, tags
 
         writeLog: (data, now) ->
-           Logfile.read @logfile, (log) =>
+            Logfile.read @logfile, (log) =>
                 log[now] = data
 
                 newLog = JSON.stringify log
