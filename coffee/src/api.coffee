@@ -15,6 +15,19 @@ module.exports = (server, tags, pinger) ->
                 n = req.params.name
                 res tags.getTimeDataFor n
         }
+        {
+            method: 'GET'
+            path:   '/api/tag/tree'
+            handler: (req, res) ->
+                res tags.getTree()
+        }
+        {
+            method: 'GET'
+            path:   '/api/tag/top'
+            handler: (req, res) ->
+                res _(tags.getTree()).where
+                    topLevel: true
+        }
     ]
 
     # /misc/

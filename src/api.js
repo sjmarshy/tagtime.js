@@ -19,6 +19,20 @@
           n = req.params.name;
           return res(tags.getTimeDataFor(n));
         }
+      }, {
+        method: 'GET',
+        path: '/api/tag/tree',
+        handler: function(req, res) {
+          return res(tags.getTree());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/tag/top',
+        handler: function(req, res) {
+          return res(_(tags.getTree()).where({
+            topLevel: true
+          }));
+        }
       }
     ]);
     server.route([
