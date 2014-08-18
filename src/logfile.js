@@ -1,15 +1,17 @@
 (function() {
-  var Logfile, Record, fs, q, _;
-
-  Record = require('./record');
+  var EventEmitter, Logfile, fs, _,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   fs = require('fs');
 
-  q = require('q');
-
   _ = require('underscore');
 
-  module.exports = Logfile = (function() {
+  EventEmitter = require('events').EventEmitter;
+
+  module.exports = Logfile = (function(_super) {
+    __extends(Logfile, _super);
+
     Logfile.handleError = function(error) {
       console.error(error);
       return process.exit(1);
@@ -64,20 +66,16 @@
 
     function Logfile(logfile) {
       this.logfile = logfile;
-      this.buildRecords();
-    }
-
-    Logfile.prototype.buildRecords = function() {
-      return Logfile.read(this.logfile, (function(_this) {
+      Logfile.read(this.logfile, (function(_this) {
         return function(log) {
-          return _this.records = _(log).map(function(tags, time) {
-            return new Record(time, tags);
-          });
+          _this.data = log;
+          return _this.emit('read', log);
         };
       })(this));
-    };
+    }
 
     Logfile.prototype.writeLog = function(data, now) {
+      this.emit('ping', now, data);
       return Logfile.read(this.logfile, (function(_this) {
         return function(log) {
           var newLog;
@@ -86,90 +84,10 @@
           return Logfile.write(_this.logfile, newLog, function(error) {
             if (error) {
               return Logfile.handleError(error);
-            } else {
-              return _this.buildRecords();
             }
           });
         };
       })(this));
-    };
-
-    Logfile.prototype.getTagsAsTree = function() {
-      var tagTree, walk;
-      tagTree = {};
-      walk = function(tag, tree) {
-        var n, t;
-        n = tag.name;
-        if (!tree[n]) {
-          tree[n] = {};
-        }
-        t = tree[n];
-        if (tag.children && tag.children.length > 0) {
-          return _(tag.children).each(function(child) {
-            return walk(child, t);
-          });
-        } else {
-          return t = null;
-        }
-      };
-      _(this.records).each(function(r) {
-        if (r.tags && r.tags.length > 0) {
-          return _(r.tags).forEach(function(tag) {
-            return walk(tag, tagTree);
-          });
-        }
-      });
-      return tagTree;
-    };
-
-    Logfile.prototype.getTagsAsDetailTree = function() {
-      var counts, detailTree, tree;
-      detailTree = {};
-      counts = this.getMostPopular();
-      return tree = this.getTagsAsTree();
-    };
-
-    Logfile.prototype.getTagsAsList = function() {
-      return _.chain(this.records).map(function(r) {
-        return r.getTags();
-      }).flatten().compact().value();
-    };
-
-    Logfile.prototype.getTagsAsUniqueList = function() {
-      return _.chain(this.records).map(function(r) {
-        return r.getTags();
-      }).flatten().compact().uniq().value();
-    };
-
-    Logfile.prototype.getMostPopular = function() {
-      return this.count(this.getTagsAsList());
-    };
-
-    Logfile.prototype.count = function(arr) {
-      var count;
-      count = {};
-      _(arr).each(function(e) {
-        if (count[e]) {
-          return count[e]++;
-        } else {
-          return count[e] = 1;
-        }
-      });
-      return count;
-    };
-
-    Logfile.prototype.getMostPopularTopLevel = function() {
-      var count, sorted, tags;
-      count = {};
-      tags = _(this.records).map(function(r) {
-        return r.getTopLevelTags();
-      });
-      sorted = _.chain(tags).flatten().sortBy(function(t) {
-        return t;
-      }).map(function(t) {
-        return t.trim();
-      }).value();
-      return this.count(tags);
     };
 
     Logfile.prototype.createLog = function() {
@@ -184,6 +102,6 @@
 
     return Logfile;
 
-  })();
+  })(EventEmitter);
 
 }).call(this);

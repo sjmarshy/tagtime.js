@@ -1,10 +1,9 @@
-Record = require './record'
-fs     = require 'fs'
-q      = require 'q'
-_      = require 'underscore'
+fs             = require 'fs'
+_              = require 'underscore'
+{EventEmitter} = require 'events'
 
 module.exports =
-    class Logfile
+    class Logfile extends EventEmitter
         @handleError: (error) ->
             console.error error
             process.exit 1
@@ -43,91 +42,19 @@ module.exports =
             return newdata.join(' ')
 
         constructor: (@logfile) ->
-            @buildRecords()
-
-        buildRecords: ->
             Logfile.read @logfile, (log) =>
-                @records = _(log).map (tags, time) ->
-                    return new Record time, tags
+                @data = log
+                @emit 'read', log
 
         writeLog: (data, now) ->
+            @emit 'ping', now, data
             Logfile.read @logfile, (log) =>
                 log[now] = data
 
                 newLog = JSON.stringify log
-                Logfile.write @logfile, newLog, (error) =>
+                Logfile.write @logfile, newLog, (error) ->
                     if error
                         Logfile.handleError error
-                    else
-                        @buildRecords()
-        getTagsAsTree: ->
-            tagTree = {}
-
-            walk = (tag, tree) ->
-                n = tag.name
-
-                unless tree[n]
-                    tree[n] = {}
-
-                t = tree[n]
-
-                if tag.children && tag.children.length > 0
-                    _(tag.children).each (child) ->
-                        walk child, t
-                else
-                    t = null
-
-            _(@records).each (r) ->
-                if r.tags && r.tags.length > 0
-                    _(r.tags).forEach (tag) ->
-                        walk tag, tagTree
-
-            return tagTree
-
-        getTagsAsDetailTree: ->
-            detailTree = {}
-            counts     = @getMostPopular()
-            tree       = @getTagsAsTree()
-
-        getTagsAsList: ->
-            _.chain(@records).map (r) ->
-                return r.getTags()
-            .flatten().compact().value()
-
-        getTagsAsUniqueList: ->
-            _.chain(@records).map (r) ->
-                return r.getTags()
-            .flatten().compact().uniq().value()
-
-        getMostPopular: ->
-            return @count @getTagsAsList()
-
-        count: (arr) ->
-            count = {}
-            _(arr).each (e) ->
-                if count[e]
-                    count[e]++
-                else
-                    count[e] = 1
-
-            return count
-
-        getMostPopularTopLevel: ->
-            count = {}
-
-            tags = _(@records).map (r) ->
-                return r.getTopLevelTags()
-
-            sorted = _.chain(tags).flatten().sortBy (t) ->
-                return t
-            .map (t) ->
-                return t.trim()
-            .value()
-
-
-            return @count tags
-
-
         createLog: ->
             unless Logfile.isFile @logfile
                 Logfile.touch @logfile, (error) ->

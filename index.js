@@ -1,7 +1,13 @@
 (function() {
-  var Hapi, Logfile, Pings, api, fs, getAllPopularString, getConfig, getPopularBreakdown, handleError, moment, os, path, q, server, spawn, _;
+  var Hapi, Logfile, Pings, Tags, api, fs, getConfig, handleError, moment, os, path, q, server, spawn, _;
 
   Hapi = require('hapi');
+
+  Pings = require('./src/pings');
+
+  Logfile = require('./src/logfile');
+
+  Tags = require('./src/tags');
 
   q = require('q');
 
@@ -12,10 +18,6 @@
   path = require('path');
 
   moment = require('moment');
-
-  Pings = require('./src/pings');
-
-  Logfile = require('./src/logfile');
 
   spawn = require('child_process').spawn;
 
@@ -43,50 +45,23 @@
     return process.exit(1);
   };
 
-  getPopularBreakdown = function(popular) {
-    var breakdown;
-    breakdown = "# Popular top-level tags";
-    return _(popular).reduce(function(memo, value, key) {
-      if (value > 5) {
-        return memo + ("\n#    " + key);
-      } else {
-        return memo;
-      }
-    }, breakdown);
-  };
-
-  getAllPopularString = function(log) {
-    var counts, string;
-    counts = log.getMostPopular();
-    string = "\n# all popular tags";
-    return _(counts).reduce(function(memo, value, key) {
-      if (value > 5) {
-        return memo + ("\n#    " + key + "(" + value + ")");
-      } else {
-        return memo;
-      }
-    }, string);
-  };
-
   getConfig('./config/tagtime.json').then(function(config) {
-    var logfile, pinger;
+    var logfile, pinger, tags;
     pinger = new Pings(config.frequency);
     logfile = new Logfile('./log.json');
     logfile.createLog();
-    api(server, logfile, pinger);
+    tags = new Tags(logfile);
+    api(server, tags, pinger);
     pinger.start();
     return pinger.on('ping', function(now) {
-      var popular, tmpfile;
+      var tmpfile;
       tmpfile = path.join(os.tmpdir(), "ping-" + now);
-      popular = logfile.getMostPopularTopLevel();
       return Logfile.touch(tmpfile, function(error) {
         var tmpString;
         if (error) {
           return handleError(error);
         } else {
           tmpString = "\n# " + (moment.unix(now).format('ddd HH:mm:ss')) + "\n";
-          tmpString += getPopularBreakdown(popular);
-          tmpString += getAllPopularString(logfile);
           return Logfile.write(tmpfile, tmpString, function() {
             var gvim, watcher;
             gvim = spawn('gvim', ['-f', '--', tmpfile]);

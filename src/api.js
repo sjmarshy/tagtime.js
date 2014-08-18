@@ -1,5 +1,5 @@
 (function() {
-  module.exports = function(server, logfile, pinger) {
+  module.exports = function(server, tags, pinger) {
     var getLast;
     getLast = function(req, res) {
       return res(pinger.lst);
@@ -7,33 +7,11 @@
     server.route([
       {
         method: 'GET',
-        path: '/api/tags/popularity',
+        path: '/api/tag/{name}',
         handler: function(req, res) {
-          return res(logfile.getMostPopular());
-        }
-      }, {
-        method: 'GET',
-        path: '/api/tags',
-        handler: function(req, res) {
-          return res(logfile.getTagsAsTree());
-        }
-      }, {
-        method: 'GET',
-        path: '/api/tags/flat',
-        handler: function(req, res) {
-          return res(logfile.getTagsAsUniqueList());
-        }
-      }, {
-        method: 'GET',
-        path: '/api/tags/flat/raw',
-        handler: function(req, res) {
-          return res(logfile.getTagsAsList());
-        }
-      }, {
-        method: 'GET',
-        path: '/api/tags/detail',
-        handler: function(req, res) {
-          return res(logfile.getTagsAsDetailTree());
+          var n;
+          n = req.params.name;
+          return res(tags.getTimeDataFor(n));
         }
       }
     ]);
