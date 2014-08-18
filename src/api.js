@@ -38,8 +38,12 @@
           midnight = moment().hour(0).minute(0).second(0);
           t = tags.getAllAfter(midnight.unix());
           return res(_(t).map(function(tag) {
-            tag.time = moment.unix(tag.time).format('ddd, hA');
-            return tag;
+            var tnew;
+            tnew = {
+              time: moment.unix(tag.time).format('ddd, hA'),
+              tags: tag.tags
+            };
+            return tnew;
           }));
         }
       }

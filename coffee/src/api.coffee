@@ -34,8 +34,10 @@ module.exports = (server, tags, pinger) ->
                 t = tags.getAllAfter midnight.unix()
 
                 res _(t).map (tag) ->
-                    tag.time = moment.unix(tag.time).format('ddd, hA')
-                    return tag
+                    tnew =
+                        time: moment.unix(tag.time).format('ddd, hA')
+                        tags: tag.tags
+                    return tnew
         }
     ]
 
