@@ -28,8 +28,14 @@ module.exports =
             return data
 
         getAllAfter: (unixTimestamp) ->
-            return _(@records).filter (rec) ->
+            return _.chain(@records).filter (rec) ->
                 return rec.time > unixTimestamp
+            .map (rec) ->
+                return {
+                    tags: Tag.stringify rec.tags
+                    time: rec.time
+                }
+            .value()
 
         getTree: ->
             makeTag = (tag, top) ->

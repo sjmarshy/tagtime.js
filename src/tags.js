@@ -46,9 +46,14 @@
     };
 
     Tags.prototype.getAllAfter = function(unixTimestamp) {
-      return _(this.records).filter(function(rec) {
+      return _.chain(this.records).filter(function(rec) {
         return rec.time > unixTimestamp;
-      });
+      }).map(function(rec) {
+        return {
+          tags: Tag.stringify(rec.tags),
+          time: rec.time
+        };
+      }).value();
     };
 
     Tags.prototype.getTree = function() {
