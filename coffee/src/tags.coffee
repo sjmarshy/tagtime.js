@@ -26,3 +26,7 @@ module.exports =
                         tags: record.tags
             return data
 
+        getAllAfter: (unixTimestamp) ->
+            return _(@records).filter (rec) ->
+                return rec.time > unixTimestamp
+

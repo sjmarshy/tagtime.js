@@ -43,6 +43,12 @@
       return data;
     };
 
+    Tags.prototype.getAllAfter = function(unixTimestamp) {
+      return _(this.records).filter(function(rec) {
+        return rec.time > unixTimestamp;
+      });
+    };
+
     return Tags;
 
   })();
