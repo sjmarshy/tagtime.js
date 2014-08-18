@@ -1,7 +1,9 @@
 (function() {
-  var Record, Tags, _;
+  var Record, Tag, Tags, _;
 
   Record = require('./record');
+
+  Tag = require('./tag');
 
   _ = require('underscore');
 
@@ -47,6 +49,51 @@
       return _(this.records).filter(function(rec) {
         return rec.time > unixTimestamp;
       });
+    };
+
+    Tags.prototype.getTree = function() {
+      var handleTag, makeChild, makeTag;
+      makeTag = function(tag, top) {
+        return {
+          tag: tag,
+          count: 1,
+          children: [],
+          childCount: 0,
+          topLevel: top
+        };
+      };
+      makeChild = function(tagObj, child) {
+        tagObj.childCount++;
+        tagObj.children.push(child);
+        return tagObj;
+      };
+      handleTag = function(tag, memo, top, parent) {
+        var exists;
+        exists = _(memo).findWhere({
+          tag: tag.first()
+        });
+        if (!exists) {
+          exists = makeTag(tag.first(), top);
+          memo.push(exists);
+          if (parent) {
+            parent.childCount++;
+            parent.children.push(exists);
+          }
+        } else {
+          exists.count++;
+        }
+        if (tag.hasChildren()) {
+          return handleTag(new Tag(tag.rest().join(':')), memo, false, exists);
+        } else {
+          return memo;
+        }
+      };
+      return _(this.records).reduce(function(memo, record) {
+        _(record.tags).each(function(t) {
+          return handleTag(t, memo, true);
+        });
+        return memo;
+      }, []);
     };
 
     return Tags;
