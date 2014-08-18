@@ -1,3 +1,5 @@
+moment = require 'moment'
+_ = require 'underscore'
 
 module.exports = (server, tags, pinger) ->
     getLast = (req, res) ->
@@ -12,6 +14,30 @@ module.exports = (server, tags, pinger) ->
             handler: (req, res) ->
                 n = req.params.name
                 res tags.getTimeDataFor n
+        }
+    ]
+
+    # /misc/
+    server.route [
+        {
+            method: 'GET'
+            path: '/api/today'
+            handler: (req, res) ->
+                midnight = moment().hour(0).minute(0).second 0
+                res tags.getAllAfter midnight.unix()
+        }
+        {
+            method: 'GET'
+            path: '/api/today/human'
+            handler: (req, res) ->
+                midnight = moment().hour(0).minute(0).second 0
+                t = tags.getAllAfter midnight.unix()
+
+                res _(t).map (tag) ->
+                    tnew =
+                        time: moment.unix(tag.time).format('ddd, hA')
+                        tags: tag.tags
+                    return tnew
         }
     ]
 
