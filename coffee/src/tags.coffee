@@ -24,7 +24,7 @@ module.exports =
                 if record.doesContainTag tagname
                     data.push
                         time: record.time
-                        tags: record.tags
+                        tags: Tag.stringify(record.tags)
             return data
 
         getAllAfter: (unixTimestamp) ->

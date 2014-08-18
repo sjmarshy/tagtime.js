@@ -38,7 +38,7 @@
         if (record.doesContainTag(tagname)) {
           return data.push({
             time: record.time,
-            tags: record.tags
+            tags: Tag.stringify(record.tags)
           });
         }
       });

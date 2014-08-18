@@ -4,6 +4,12 @@
   _ = require('underscore');
 
   module.exports = Tag = (function() {
+    Tag.stringify = function(tagArray) {
+      return _(tagArray).map(function(t) {
+        return t.tag;
+      });
+    };
+
     function Tag(tag) {
       this.tag = tag;
       this.split = this.tag.split(':');

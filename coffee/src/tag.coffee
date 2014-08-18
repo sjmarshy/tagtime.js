@@ -2,6 +2,9 @@ _  = require 'underscore'
 
 module.exports =
     class Tag
+        @stringify: (tagArray) ->
+            return _(tagArray).map (t) ->
+                return t.tag
         constructor: (@tag) ->
             @split = @tag.split(':')
         first: ->
