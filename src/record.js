@@ -1,5 +1,7 @@
 (function() {
-  var Record, _;
+  var Record, Tag, _;
+
+  Tag = require('./Tag');
 
   _ = require('underscore');
 
@@ -7,13 +9,13 @@
     function Record(time, tagString) {
       this.time = time != null ? time : 0;
       this.tags = _(tagString.split(',')).map(function(tag) {
-        return tag.trim();
+        return new Tag(tag.trim());
       });
     }
 
     Record.prototype.getTopLevelTags = function() {
       return _(this.tags).map(function(tag) {
-        return tag.split(':')[0];
+        return tag.first();
       });
     };
 
@@ -21,7 +23,7 @@
       var answer;
       answer = false;
       _(this.tags).each(function(tag) {
-        if (tag.indexOf(name) !== -1) {
+        if (tag.contains(name)) {
           return answer = true;
         }
       });

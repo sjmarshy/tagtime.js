@@ -2,43 +2,24 @@ _  = require 'underscore'
 
 module.exports =
     class Tag
-        @makeChild: (parent, child) ->
-            parent.children = []
-            parent.children.push child
+        @stringify: (tagArray) ->
+            return _(tagArray).map (t) ->
+                return t.tag
+        constructor: (@tag) ->
+            @split = @tag.split(':')
+        first: ->
+            return @split[0]
 
-        constructor: (@name, @children) ->
-            unless @children
-                @children = []
+        rest: ->
+            return @split.slice 1
 
-        getChild: (name) ->
-            return _(@children).map (c) ->
-                if c.name == name
-                    return c
-                else
-                    return c.getChild name
+        last: ->
+            return @split[@split.length - 1]
 
-        getDirectHeirs: ->
-            return @children
+        contains: (search) ->
+            return (@tag.indexOf(search) != -1)
 
-        getDirectHeirsNames: ->
-            _(@children).map (c) ->
-                return c.name
-
-        getHeirs: ->
-            heirs = []
-
-            walk = (tag) ->
-                heirs.push tag
-                _(tag.getDirectHeirs()).each (c) ->
-                    walk (c)
-
-            _(@children).each (c) ->
-                walk c
-
-            return _(heirs).flatten()
-
-        getHeirsNames: ->
-            _(@getHeirs()).map (p) ->
-                return p.name
+        hasChildren: ->
+            return (@split.length > 1)
 
 

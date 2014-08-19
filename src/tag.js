@@ -4,58 +4,35 @@
   _ = require('underscore');
 
   module.exports = Tag = (function() {
-    Tag.makeChild = function(parent, child) {
-      parent.children = [];
-      return parent.children.push(child);
+    Tag.stringify = function(tagArray) {
+      return _(tagArray).map(function(t) {
+        return t.tag;
+      });
     };
 
-    function Tag(name, children) {
-      this.name = name;
-      this.children = children;
-      if (!this.children) {
-        this.children = [];
-      }
+    function Tag(tag) {
+      this.tag = tag;
+      this.split = this.tag.split(':');
     }
 
-    Tag.prototype.getChild = function(name) {
-      return _(this.children).map(function(c) {
-        if (c.name === name) {
-          return c;
-        } else {
-          return c.getChild(name);
-        }
-      });
+    Tag.prototype.first = function() {
+      return this.split[0];
     };
 
-    Tag.prototype.getDirectHeirs = function() {
-      return this.children;
+    Tag.prototype.rest = function() {
+      return this.split.slice(1);
     };
 
-    Tag.prototype.getDirectHeirsNames = function() {
-      return _(this.children).map(function(c) {
-        return c.name;
-      });
+    Tag.prototype.last = function() {
+      return this.split[this.split.length - 1];
     };
 
-    Tag.prototype.getHeirs = function() {
-      var heirs, walk;
-      heirs = [];
-      walk = function(tag) {
-        heirs.push(tag);
-        return _(tag.getDirectHeirs()).each(function(c) {
-          return walk(c);
-        });
-      };
-      _(this.children).each(function(c) {
-        return walk(c);
-      });
-      return _(heirs).flatten();
+    Tag.prototype.contains = function(search) {
+      return this.tag.indexOf(search) !== -1;
     };
 
-    Tag.prototype.getHeirsNames = function() {
-      return _(this.getHeirs()).map(function(p) {
-        return p.name;
-      });
+    Tag.prototype.hasChildren = function() {
+      return this.split.length > 1;
     };
 
     return Tag;
