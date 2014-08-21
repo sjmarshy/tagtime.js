@@ -1,134 +1,17 @@
 (function() {
-  var Logfile, Record, Tag, fs, q, _;
+  var EventEmitter, Logfile, fs, _,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   fs = require('fs');
 
-  q = require('q');
-
   _ = require('underscore');
 
-  Tag = (function() {
-    Tag.makeChild = function(parent, child) {
-      parent.children = [];
-      return parent.children.push(child);
-    };
+  EventEmitter = require('events').EventEmitter;
 
-    function Tag(name, children) {
-      this.name = name;
-      this.children = children;
-      if (!this.children) {
-        this.children = [];
-      }
-    }
+  module.exports = Logfile = (function(_super) {
+    __extends(Logfile, _super);
 
-    Tag.prototype.getChild = function(name) {
-      return _(this.children).map(function(c) {
-        if (c.name === name) {
-          return c;
-        } else {
-          return c.getChild(name);
-        }
-      });
-    };
-
-    Tag.prototype.getDirectHeirs = function() {
-      return this.children;
-    };
-
-    Tag.prototype.getDirectHeirsNames = function() {
-      return _(this.children).map(function(c) {
-        return c.name;
-      });
-    };
-
-    Tag.prototype.getHeirs = function() {
-      var heirs, walk;
-      heirs = [];
-      walk = function(tag) {
-        heirs.push(tag);
-        return _(tag.getDirectHeirs()).each(function(c) {
-          return walk(c);
-        });
-      };
-      _(this.children).each(function(c) {
-        return walk(c);
-      });
-      return _(heirs).flatten();
-    };
-
-    Tag.prototype.getHeirsNames = function() {
-      return _(this.getHeirs()).map(function(p) {
-        return p.name;
-      });
-    };
-
-    return Tag;
-
-  })();
-
-  Record = (function() {
-    Record.parseTags = function(tags) {
-      var clean_tags, tags_a, tags_a_i;
-      clean_tags = tags.trim();
-      if (!clean_tags) {
-        return null;
-      }
-      tags_a = clean_tags.split(',');
-      tags_a_i = _(tags_a).map(function(t) {
-        var heirarchy_a, tag_h_a;
-        t = t.trim();
-        if (t.indexOf(':') !== -1) {
-          heirarchy_a = t.split(':');
-          tag_h_a = _(heirarchy_a).reduce(function(memo, value, n, a) {
-            var c, getDeepestChild, p;
-            getDeepestChild = function(tag) {
-              if (tag.children && tag.children[0] && tag.children[0].children) {
-                return getDeepestChild(tag.children[0]);
-              } else {
-                return tag.children[0] || tag;
-              }
-            };
-            if (!memo.children) {
-              p = new Tag(memo);
-              c = new Tag(value);
-              p.children = [c];
-              return p;
-            } else {
-              t = getDeepestChild(memo);
-              t.children = [new Tag(value)];
-              return memo;
-            }
-          });
-          return tag_h_a;
-        } else {
-          return new Tag(t);
-        }
-      });
-      return tags_a_i;
-    };
-
-    function Record(time, tags) {
-      this.time = time;
-      this.tags = Record.parseTags(tags);
-    }
-
-    Record.prototype.getTopLevelTags = function() {
-      return _(this.tags).map(function(t) {
-        return t.name;
-      });
-    };
-
-    Record.prototype.getTags = function() {
-      return _.chain(this.tags).map(function(t) {
-        return t.getHeirsNames();
-      }).flatten().value();
-    };
-
-    return Record;
-
-  })();
-
-  module.exports = Logfile = (function() {
     Logfile.handleError = function(error) {
       console.error(error);
       return process.exit(1);
@@ -183,20 +66,16 @@
 
     function Logfile(logfile) {
       this.logfile = logfile;
-      this.buildRecords();
-    }
-
-    Logfile.prototype.buildRecords = function() {
-      return Logfile.read(this.logfile, (function(_this) {
+      Logfile.read(this.logfile, (function(_this) {
         return function(log) {
-          return _this.records = _(log).map(function(tags, time) {
-            return new Record(time, tags);
-          });
+          _this.data = log;
+          return _this.emit('read', log);
         };
       })(this));
-    };
+    }
 
     Logfile.prototype.writeLog = function(data, now) {
+      this.emit('ping', now, data);
       return Logfile.read(this.logfile, (function(_this) {
         return function(log) {
           var newLog;
@@ -205,90 +84,10 @@
           return Logfile.write(_this.logfile, newLog, function(error) {
             if (error) {
               return Logfile.handleError(error);
-            } else {
-              return _this.buildRecords();
             }
           });
         };
       })(this));
-    };
-
-    Logfile.prototype.getTagsAsTree = function() {
-      var tagTree, walk;
-      tagTree = {};
-      walk = function(tag, tree) {
-        var n, t;
-        n = tag.name;
-        if (!tree[n]) {
-          tree[n] = {};
-        }
-        t = tree[n];
-        if (tag.children && tag.children.length > 0) {
-          return _(tag.children).each(function(child) {
-            return walk(child, t);
-          });
-        } else {
-          return t = null;
-        }
-      };
-      _(this.records).each(function(r) {
-        if (r.tags && r.tags.length > 0) {
-          return _(r.tags).forEach(function(tag) {
-            return walk(tag, tagTree);
-          });
-        }
-      });
-      return tagTree;
-    };
-
-    Logfile.prototype.getTagsAsDetailTree = function() {
-      var counts, detailTree, tree;
-      detailTree = {};
-      counts = this.getMostPopular();
-      return tree = this.getTagsAsTree();
-    };
-
-    Logfile.prototype.getTagsAsList = function() {
-      return _.chain(this.records).map(function(r) {
-        return r.getTags();
-      }).flatten().compact().value();
-    };
-
-    Logfile.prototype.getTagsAsUniqueList = function() {
-      return _.chain(this.records).map(function(r) {
-        return r.getTags();
-      }).flatten().compact().uniq().value();
-    };
-
-    Logfile.prototype.getMostPopular = function() {
-      return this.count(this.getTagsAsList());
-    };
-
-    Logfile.prototype.count = function(arr) {
-      var count;
-      count = {};
-      _(arr).each(function(e) {
-        if (count[e]) {
-          return count[e]++;
-        } else {
-          return count[e] = 1;
-        }
-      });
-      return count;
-    };
-
-    Logfile.prototype.getMostPopularTopLevel = function() {
-      var count, sorted, tags;
-      count = {};
-      tags = _(this.records).map(function(r) {
-        return r.getTopLevelTags();
-      });
-      sorted = _.chain(tags).flatten().sortBy(function(t) {
-        return t;
-      }).map(function(t) {
-        return t.trim();
-      }).value();
-      return this.count(tags);
     };
 
     Logfile.prototype.createLog = function() {
@@ -303,6 +102,6 @@
 
     return Logfile;
 
-  })();
+  })(EventEmitter);
 
 }).call(this);

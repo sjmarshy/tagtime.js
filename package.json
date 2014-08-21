@@ -1,6 +1,6 @@
 {
   "name": "tagtime.js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A node.js implementation of [tagtime](https://github.com/dreeves/tagtime)",
   "main": "index.js",
   "scripts": {

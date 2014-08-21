@@ -1,18 +1,20 @@
 Hapi    = require 'hapi'
+Pings   = require './src/pings'
+Logfile = require './src/logfile'
+Tags    = require './src/tags'
 q       = require 'q'
 fs      = require 'fs'
 os      = require 'os'
 path    = require 'path'
 moment  = require 'moment'
-Pings   = require './src/pings'
-Logfile = require './src/logfile'
 {spawn} = require 'child_process'
 _       = require 'underscore'
+api     = require './src/api'
 
 server = new Hapi.Server 3891
 
 getConfig = (fname) ->
-    d = q.defer();
+    d = q.defer()
 
     fs.readFile fname, (error, buffer) ->
         if error
@@ -27,109 +29,31 @@ handleError = (error) ->
     console.error error
     process.exit 1
 
-
-getPopularBreakdown = (popular) ->
-    breakdown = "# Popular top-level tags"
-    return _(popular).reduce (memo, value, key) ->
-        if value > 5
-            return memo + "\n#    #{key}"
-        else
-            return memo
-    , breakdown
-
-getAllPopularString = (log) ->
-    counts = log.getMostPopular()
-    string = "\n# all popular tags"
-    return _(counts).reduce (memo, value, key) ->
-        if value > 5
-            return memo + "\n#    #{key}(#{value})"
-        else
-            return memo
-    , string
-
-
-api = (server, logfile, pinger) ->
-    getLast = (req, res) ->
-        res pinger.lst
-
-    # /tags/
-    server.route [
-        {
-            method: 'GET'
-            path: '/api/tags/popularity'
-            handler: (req, res) ->
-                res logfile.getMostPopular()
-        }
-        {
-            method: 'GET'
-            path: '/api/tags'
-            handler: (req, res) ->
-                res logfile.getTagsAsTree()
-        }
-        {
-            method: 'GET'
-            path: '/api/tags/flat'
-            handler: (req, res) ->
-                res logfile.getTagsAsUniqueList()
-        }
-        {
-            method: 'GET'
-            path: '/api/tags/flat/raw'
-            handler: (req, res) ->
-                res logfile.getTagsAsList()
-        }
-        {
-            method: 'GET'
-            path: '/api/tags/detail'
-            handler: (req, res) ->
-                res logfile.getTagsAsDetailTree()
-        }
-    ]
-
-    # /time/
-    server.route [
-        {
-            method: 'GET'
-            path: '/api/time/prev'
-            handler: getLast
-        }
-        {
-            method: 'GET'
-            path: '/api/time/last'
-            handler: getLast
-        }
-        {
-            method: 'GET'
-            path: '/api/time/next'
-            handler: (req, res) ->
-                res pinger.nxt
-        }
-    ]
-
-
-    server.start()
-
 getConfig './config/tagtime.json'
 .then (config) ->
+    # Pings controls the frequency of pings / time based stuff
     pinger = new Pings config.frequency
 
+    # Logfile reads from / writes to the log file
     logfile = new Logfile './log.json'
     logfile.createLog()
 
-    api server, logfile, pinger
+    # tags keeps track of all the individual records and tags and provides
+    # ways of manipulating them
+    tags = new Tags logfile
+
+    # api provides a HTTP interface to grab all this stuff
+    api server, tags, pinger
 
     pinger.start()
     pinger.on 'ping', (now) ->
         tmpfile = path.join os.tmpdir(), "ping-#{now}"
-        popular = logfile.getMostPopularTopLevel()
 
         Logfile.touch tmpfile, (error) ->
             if error
                 handleError error
             else
                 tmpString  = "\n# #{moment.unix(now).format('ddd HH:mm:ss')}\n"
-                tmpString += getPopularBreakdown popular
-                tmpString += getAllPopularString(logfile)
 
                 Logfile.write tmpfile, tmpString, ->
                     gvim = spawn 'gvim', ['-f', '--', tmpfile]
@@ -138,7 +62,8 @@ getConfig './config/tagtime.json'
                         fs.readFile tmpfile, (error, data) ->
                             if data
                                 data = data.toString()
-                                logfile.writeLog Logfile.stripComments(data), now
+                                logfile.writeLog Logfile.stripComments(data),
+                                    now
 
                     watcher.on 'change', ->
                         watcher.close()
