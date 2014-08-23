@@ -1,5 +1,5 @@
 *.swp
 *.swo
 node_modules
-config/*.json
+log.json
 *.sketch
