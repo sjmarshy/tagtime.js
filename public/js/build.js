@@ -37,42 +37,32 @@ var getTagName = function (tag) {
 };
 
 $.get('/api/tag/top', function(data) {
-    var sortedTags = reverseArrayDestructive(_.sortBy(data, 'count'));
-    var numberOfTags = sortedTags.length;
+    var sortedTags    = reverseArrayDestructive(_.sortBy(data, 'count'));
+    var numberOfTags  = sortedTags.length;
+    var padding       = 10;
+    var headTagHeight = 60;
 
-    var tags = d3.select('body').selectAll('div')
+    var page = d3.select('svg').selectAll('rect')
         .data(sortedTags);
+    
 
-    tags.enter().append('div');
+    var tags = page.enter().append('rect');
 
     tags
         .classed('tag', true)
-        .text(getTagName)
-        .style({
-            height: '60px',
-            float: 'left',
-            margin: '0.5%',
-            color: 'white',
-            'text-align': 'center',
-            'line-height': '60px'
+        .attr('height', function (d) {
+            console.log(d);
+            return headTagHeight;
         })
-        .style('width', function () {
-            if (numberOfTags % 2 === 0) {
-                return "49%";
-            } else if (numberOfTags % 3 === 0) {
-                return "33%";
-            } else {
-                return "25%";
-            }
-        })
-        .style('background', function () {
-            return "#" + hexColorsLoop();
+        .attr('width', 300) 
+        .attr('transform', function (tag, i) {
+            return "translate(0," + ((i * headTagHeight) + (i * padding))  + ")";
         })
         .attr('title', function (tag) {
             return tag.count;
         });
 
-    tags.exit().remove();
+    page.exit().remove();
 });
 
 
