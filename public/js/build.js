@@ -36,33 +36,125 @@ var getTagName = function (tag) {
     return tag.tag;
 };
 
+var heightSoFar = function (tagsSoFar, headTagHeight, padding) {
+    return _.reduce(tagsSoFar, function (memo, tag) {
+        return memo + (headTagHeight * tag.depth) + padding;
+    }, 0);
+};
+
+var calculateYPosition = function (tag, i, sortedTags, headTagHeight, padding) {
+    var heightModifier;
+
+    if (i > 0) {
+        heightModifier = heightSoFar(
+        sortedTags.slice(0, i),
+        headTagHeight, padding);
+    } else {
+        heightModifier = 0;
+    }
+
+    return "translate(0," + heightModifier  + ")";
+};
+
 $.get('/api/tag/top', function(data) {
     var sortedTags    = reverseArrayDestructive(_.sortBy(data, 'count'));
     var numberOfTags  = sortedTags.length;
     var padding       = 10;
     var headTagHeight = 60;
+    var tagWidth      = $('body').width() - 20;
 
-    var page = d3.select('svg').selectAll('rect')
-        .data(sortedTags);
-    
+    var page = d3.select('svg');
 
-    var tags = page.enter().append('rect');
+    var childScale = d3.scale.linear();
 
-    tags
+    childScale.range([0, tagWidth]);
+
+    var tag = page.selectAll('g')
+        .data(sortedTags).enter()
+        .append('g')
         .classed('tag', true)
-        .attr('height', function (d) {
-            console.log(d);
-            return headTagHeight;
+        .attr('height', function (tag) {
+            return headTagHeight * tag.depth;
         })
-        .attr('width', 300) 
+        .attr('width', tagWidth)
         .attr('transform', function (tag, i) {
-            return "translate(0," + ((i * headTagHeight) + (i * padding))  + ")";
+            return calculateYPosition(tag, i, sortedTags, headTagHeight, padding);
+        });
+
+    tag.append('rect')
+        .attr('width', tagWidth)
+        .attr('height', function () {
+            return headTagHeight;
         })
         .attr('title', function (tag) {
             return tag.count;
+        })
+        .style('fill', function () {
+            return '#' + hexColorsLoop();
         });
 
-    page.exit().remove();
+    tag.append('text')
+        .attr('y', 15)
+        .attr('x', 10)
+        .style('fill', 'white')
+        .text(getTagName);
+
+    tag.append('g').classed('child', true)
+        .attr('width', tagWidth);
+
+
+    var child = tag.selectAll('.child').selectAll('rect')
+        .data(function(d) {
+            if (d.childCount > 0) {
+                var children = d.children;
+                var totalCount = _.chain(children).map(function (tag) {
+                    return tag.count;
+                }).reduce(function (memo, tagCount) {
+                    return memo + tagCount;
+                }).value();
+
+                var getChildWidth = function (count) {
+                    childScale.domain([0, totalCount]);
+                    return childScale(count);
+                };
+
+                var previousChildrenWidth = function (i) {
+                    return _.reduce(children.slice(0, i), function (memo, child) {
+                        return memo + getChildWidth(child.count);
+                    }, 0);
+                };
+
+                return _.map(children, function (tag, i) {
+                    return {
+                        tag: tag,
+                        width: getChildWidth(tag.count),
+                        left: previousChildrenWidth(i),
+                        totalCount: totalCount
+                    };
+                });
+            } else {
+                return {};
+            }
+        }).enter().append('rect');
+
+    child
+        .attr('height', headTagHeight)
+        .attr('width', function (d) {
+            return d.width;
+        })
+        .attr('transform', function (d) {
+            return 'translate(' + d.left + ',' + (headTagHeight + 2) + ')';
+        })
+        .attr('title', function (d) {
+            return d.tag.tag + ', ' + d.tag.count;
+        })
+        .style('fill', function () {
+            return '#' + hexColorsLoop();
+        });
+
+    $('body').height(function () {
+        return heightSoFar(sortedTags, headTagHeight, padding);
+    });
 });
 
 
