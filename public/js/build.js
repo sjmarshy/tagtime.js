@@ -73,10 +73,6 @@ $.get('/api/tag/top', function(data) {
         });
 
     tags.exit().remove();
-
-    tags.each(function () {
-        console.log(this);
-    });
 });
 
 
