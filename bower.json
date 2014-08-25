@@ -1,0 +1,25 @@
+{
+  "name": "tagtime_js",
+  "main": "index.js",
+  "version": "0.3.0",
+  "homepage": "https://github.com/sjmarshy/tagtime.js",
+  "authors": [
+    "Sam Marshall <sjmarshy@gmail.com>"
+  ],
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "~3.4.11",
+    "jquery": "~2.1.1"
+  }
+}

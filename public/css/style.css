@@ -1,0 +1,9 @@
+h1 {
+    text-align: center;
+    width: 100%;
+    display: inline-block;
+}
+
+svg {
+    overflow: visible;
+}

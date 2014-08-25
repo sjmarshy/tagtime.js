@@ -44,13 +44,33 @@ module.exports =
                     count: 1
                     children: []
                     childCount: 0
+                    depth: 1
                     topLevel: top
                 }
 
-            makeChild = (tagObj, child) ->
-                tagObj.childCount++
-                tagObj.children.push child
-                return tagObj
+            tagHasChildren = (tag) ->
+                if tag.childCount == 0
+                    return false
+                else
+                    return true
+
+            getDepth = (tag, depthSoFar = 1) ->
+                unless tagHasChildren tag
+                    return 1
+                else
+                    depthSoFar = depthSoFar + 1
+
+                    childrenWithChildren = _.filter(
+                        tag.children,
+                        tagHasChildren)
+
+                    if childrenWithChildren.length > 0
+                        depthArray = _.map childrenWithChildren, (child) ->
+                            return getDepth child, depthSoFar
+
+                        return _.max(depthArray) || depthSoFar
+                    else
+                        return depthSoFar
 
             handleTag = (tag, memo, top, parent) ->
                 exists = _(memo).findWhere
@@ -66,16 +86,19 @@ module.exports =
                 else
                     exists.count++
 
-
                 if tag.hasChildren()
                     handleTag new Tag(tag.rest().join(':')), memo, false, exists
                 else
                     return memo
 
-            return _(@records).reduce (memo, record) ->
+            tree =  _(@records).reduce (memo, record) ->
                 _(record.tags).each (t) ->
                     handleTag t, memo, true
                 return memo
             , []
+
+            return _.map tree, (tag) ->
+                tag.depth = getDepth tag
+                return tag
 
 

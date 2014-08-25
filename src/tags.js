@@ -57,20 +57,43 @@
     };
 
     Tags.prototype.getTree = function() {
-      var handleTag, makeChild, makeTag;
+      var getDepth, handleTag, makeTag, tagHasChildren, tree;
       makeTag = function(tag, top) {
         return {
           tag: tag,
           count: 1,
           children: [],
           childCount: 0,
+          depth: 1,
           topLevel: top
         };
       };
-      makeChild = function(tagObj, child) {
-        tagObj.childCount++;
-        tagObj.children.push(child);
-        return tagObj;
+      tagHasChildren = function(tag) {
+        if (tag.childCount === 0) {
+          return false;
+        } else {
+          return true;
+        }
+      };
+      getDepth = function(tag, depthSoFar) {
+        var childrenWithChildren, depthArray;
+        if (depthSoFar == null) {
+          depthSoFar = 1;
+        }
+        if (!tagHasChildren(tag)) {
+          return 1;
+        } else {
+          depthSoFar = depthSoFar + 1;
+          childrenWithChildren = _.filter(tag.children, tagHasChildren);
+          if (childrenWithChildren.length > 0) {
+            depthArray = _.map(childrenWithChildren, function(child) {
+              return getDepth(child, depthSoFar);
+            });
+            return _.max(depthArray) || depthSoFar;
+          } else {
+            return depthSoFar;
+          }
+        }
       };
       handleTag = function(tag, memo, top, parent) {
         var exists;
@@ -93,12 +116,16 @@
           return memo;
         }
       };
-      return _(this.records).reduce(function(memo, record) {
+      tree = _(this.records).reduce(function(memo, record) {
         _(record.tags).each(function(t) {
           return handleTag(t, memo, true);
         });
         return memo;
       }, []);
+      return _.map(tree, function(tag) {
+        tag.depth = getDepth(tag);
+        return tag;
+      });
     };
 
     return Tags;
