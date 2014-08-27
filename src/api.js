@@ -21,6 +21,15 @@
         }
       }, {
         method: 'GET',
+        path: '/api/count/tag/{name}',
+        handler: function(req, res) {
+          var n, t;
+          n = req.params.name;
+          t = tags.getTimeDataFor(n);
+          return res(t.length);
+        }
+      }, {
+        method: 'GET',
         path: '/api/tag/tree',
         handler: function(req, res) {
           return res(tags.getTree());
@@ -33,24 +42,32 @@
             topLevel: true
           }));
         }
-      }
-    ]);
-    server.route([
-      {
+      }, {
         method: 'GET',
         path: '/api/today',
         handler: function(req, res) {
-          var midnight;
-          midnight = moment().hour(0).minute(0).second(0);
-          return res(tags.getAllAfter(midnight.unix()));
+          return res(tags.getAllAfterMidnight());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/today/find/{tag}',
+        handler: function(req, res) {
+          return res(tags.getAfterMidnight(req.params.tag));
+        }
+      }, {
+        method: 'GET',
+        path: '/api/today/count/{tag}',
+        handler: function(req, res) {
+          var tagList;
+          tagList = tags.getAfterMidnight(req.params.tag);
+          return res(tagList.length);
         }
       }, {
         method: 'GET',
         path: '/api/today/human',
         handler: function(req, res) {
-          var midnight, t;
-          midnight = moment().hour(0).minute(0).second(0);
-          t = tags.getAllAfter(midnight.unix());
+          var t;
+          t = tags.getAllAfterMidnight();
           return res(_(t).map(function(tag) {
             var tnew;
             tnew = {
