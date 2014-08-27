@@ -1,9 +1,11 @@
 (function() {
-  var Record, Tag, Tags, _;
+  var Moment, Record, Tag, Tags, getMidnight, _;
 
   Record = require('./record');
 
   Tag = require('./tag');
+
+  Moment = require('moment');
 
   _ = require('underscore');
 
@@ -45,6 +47,20 @@
       return data;
     };
 
+    Tags.prototype.getAfter = function(tagname, unixTimestamp) {
+      var t;
+      t = this.getTimeDataFor(tagname);
+      return _.filter(t, function(ts) {
+        return ts.time > unixTimestamp;
+      });
+    };
+
+    Tags.prototype.getAfterMidnight = function(tagname) {
+      var midnight;
+      midnight = getMidnight();
+      return getAfter(tagname, midnight);
+    };
+
     Tags.prototype.getAllAfter = function(unixTimestamp) {
       return _.chain(this.records).filter(function(rec) {
         return rec.time > unixTimestamp;
@@ -56,8 +72,14 @@
       }).value();
     };
 
+    Tags.prototype.getAllAfterMidnight = function() {
+      var midnight;
+      midnight = getMidnight();
+      return this.getAllAfter(midnight.unix());
+    };
+
     Tags.prototype.getTree = function() {
-      var getDepth, handleTag, makeTag, tagHasChildren, tree;
+      var getDepth, handleTag, makeTag, tagHasChildren;
       makeTag = function(tag, top) {
         return {
           tag: tag,
@@ -76,23 +98,13 @@
         }
       };
       getDepth = function(tag, depthSoFar) {
-        var childrenWithChildren, depthArray;
-        if (depthSoFar == null) {
-          depthSoFar = 1;
-        }
+        var childrenWithChildren, depth;
         if (!tagHasChildren(tag)) {
-          return 1;
+          return 0;
         } else {
-          depthSoFar = depthSoFar + 1;
           childrenWithChildren = _.filter(tag.children, tagHasChildren);
-          if (childrenWithChildren.length > 0) {
-            depthArray = _.map(childrenWithChildren, function(child) {
-              return getDepth(child, depthSoFar);
-            });
-            return _.max(depthArray) || depthSoFar;
-          } else {
-            return depthSoFar;
-          }
+          depth = (depthSoFar || 1, +getDepth(_.filter(childrenWithChildren, tagHasChildren)));
+          return depth;
         }
       };
       handleTag = function(tag, memo, top, parent) {
@@ -116,20 +128,20 @@
           return memo;
         }
       };
-      tree = _(this.records).reduce(function(memo, record) {
+      return _(this.records).reduce(function(memo, record) {
         _(record.tags).each(function(t) {
           return handleTag(t, memo, true);
         });
         return memo;
       }, []);
-      return _.map(tree, function(tag) {
-        tag.depth = getDepth(tag);
-        return tag;
-      });
     };
 
     return Tags;
 
   })();
+
+  getMidnight = function() {
+    return Moment().hour(0).minute(0).second(0);
+  };
 
 }).call(this);
