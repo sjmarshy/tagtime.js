@@ -17,6 +17,14 @@ module.exports = (server, tags, pinger) ->
         }
         {
             method: 'GET'
+            path: '/api/count/tag/{name}'
+            handler: (req, res) ->
+                n = req.params.name
+                t = tags.getTimeDataFor n
+                res t.length
+        }
+        {
+            method: 'GET'
             path:   '/api/tag/tree'
             handler: (req, res) ->
                 res tags.getTree()
@@ -28,23 +36,30 @@ module.exports = (server, tags, pinger) ->
                 res _(tags.getTree()).where
                     topLevel: true
         }
-    ]
-
-    # /misc/
-    server.route [
         {
             method: 'GET'
             path: '/api/today'
             handler: (req, res) ->
-                midnight = moment().hour(0).minute(0).second 0
-                res tags.getAllAfter midnight.unix()
+                res tags.getAllAfterMidnight()
+        }
+        {
+            method: 'GET'
+            path: '/api/today/find/{tag}'
+            handler: (req, res) ->
+                res tags.getAfterMidnight req.params.tag
+        }
+        {
+            method: 'GET'
+            path: '/api/today/count/{tag}'
+            handler: (req, res) ->
+                tagList = tags.getAfterMidnight req.params.tag
+                res tagList.length
         }
         {
             method: 'GET'
             path: '/api/today/human'
             handler: (req, res) ->
-                midnight = moment().hour(0).minute(0).second 0
-                t = tags.getAllAfter midnight.unix()
+                t = tags.getAllAfterMidnight()
 
                 res _(t).map (tag) ->
                     tnew =

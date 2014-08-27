@@ -1,5 +1,6 @@
 Record = require './record'
 Tag    = require './tag'
+Moment = require 'moment'
 _      = require 'underscore'
 
 module.exports =
@@ -27,6 +28,16 @@ module.exports =
                         tags: Tag.stringify(record.tags)
             return data
 
+        getAfter: (tagname, unixTimestamp) ->
+            t = @getTimeDataFor(tagname)
+            return _.filter t, (ts) ->
+                return ts.time > unixTimestamp
+
+        getAfterMidnight: (tagname) ->
+            midnight = getMidnight()
+            return getAfter tagname, midnight
+
+
         getAllAfter: (unixTimestamp) ->
             return _.chain(@records).filter (rec) ->
                 return rec.time > unixTimestamp
@@ -37,6 +48,10 @@ module.exports =
                 }
             .value()
 
+        getAllAfterMidnight: ->
+            midnight = getMidnight()
+            return this.getAllAfter midnight.unix()
+
         getTree: ->
             makeTag = (tag, top) ->
                 return {
@@ -44,13 +59,30 @@ module.exports =
                     count: 1
                     children: []
                     childCount: 0
+                    depth: 1
                     topLevel: top
                 }
 
-            makeChild = (tagObj, child) ->
-                tagObj.childCount++
-                tagObj.children.push child
-                return tagObj
+            tagHasChildren = (tag) ->
+                if tag.childCount == 0
+                    return false
+                else
+                    return true
+
+            getDepth = (tag, depthSoFar) ->
+                unless tagHasChildren tag
+                    return 0
+                else
+                    childrenWithChildren = _.filter(
+                        tag.children,
+                        tagHasChildren)
+                    depth = ((depthSoFar || 1)
+                    + getDepth _.filter(childrenWithChildren, tagHasChildren)
+                    )
+                    return depth
+
+
+
 
             handleTag = (tag, memo, top, parent) ->
                 exists = _(memo).findWhere
@@ -79,3 +111,5 @@ module.exports =
             , []
 
 
+getMidnight = ->
+    return Moment().hour(0).minute(0).second 0

@@ -1,9 +1,11 @@
 (function() {
-  var Record, Tag, Tags, _;
+  var Moment, Record, Tag, Tags, getMidnight, _;
 
   Record = require('./record');
 
   Tag = require('./tag');
+
+  Moment = require('moment');
 
   _ = require('underscore');
 
@@ -45,6 +47,20 @@
       return data;
     };
 
+    Tags.prototype.getAfter = function(tagname, unixTimestamp) {
+      var t;
+      t = this.getTimeDataFor(tagname);
+      return _.filter(t, function(ts) {
+        return ts.time > unixTimestamp;
+      });
+    };
+
+    Tags.prototype.getAfterMidnight = function(tagname) {
+      var midnight;
+      midnight = getMidnight();
+      return getAfter(tagname, midnight);
+    };
+
     Tags.prototype.getAllAfter = function(unixTimestamp) {
       return _.chain(this.records).filter(function(rec) {
         return rec.time > unixTimestamp;
@@ -56,21 +72,40 @@
       }).value();
     };
 
+    Tags.prototype.getAllAfterMidnight = function() {
+      var midnight;
+      midnight = getMidnight();
+      return this.getAllAfter(midnight.unix());
+    };
+
     Tags.prototype.getTree = function() {
-      var handleTag, makeChild, makeTag;
+      var getDepth, handleTag, makeTag, tagHasChildren;
       makeTag = function(tag, top) {
         return {
           tag: tag,
           count: 1,
           children: [],
           childCount: 0,
+          depth: 1,
           topLevel: top
         };
       };
-      makeChild = function(tagObj, child) {
-        tagObj.childCount++;
-        tagObj.children.push(child);
-        return tagObj;
+      tagHasChildren = function(tag) {
+        if (tag.childCount === 0) {
+          return false;
+        } else {
+          return true;
+        }
+      };
+      getDepth = function(tag, depthSoFar) {
+        var childrenWithChildren, depth;
+        if (!tagHasChildren(tag)) {
+          return 0;
+        } else {
+          childrenWithChildren = _.filter(tag.children, tagHasChildren);
+          depth = (depthSoFar || 1, +getDepth(_.filter(childrenWithChildren, tagHasChildren)));
+          return depth;
+        }
       };
       handleTag = function(tag, memo, top, parent) {
         var exists;
@@ -104,5 +139,9 @@
     return Tags;
 
   })();
+
+  getMidnight = function() {
+    return Moment().hour(0).minute(0).second(0);
+  };
 
 }).call(this);
