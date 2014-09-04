@@ -58,7 +58,7 @@
     Tags.prototype.getAfterMidnight = function(tagname) {
       var midnight;
       midnight = getMidnight();
-      return getAfter(tagname, midnight);
+      return this.getAfter(tagname, midnight);
     };
 
     Tags.prototype.getAllAfter = function(unixTimestamp) {
@@ -75,7 +75,7 @@
     Tags.prototype.getAllAfterMidnight = function() {
       var midnight;
       midnight = getMidnight();
-      return this.getAllAfter(midnight.unix());
+      return this.getAllAfter(midnight);
     };
 
     Tags.prototype.getTree = function() {
@@ -141,7 +141,7 @@
   })();
 
   getMidnight = function() {
-    return Moment().hour(0).minute(0).second(0);
+    return Moment().hour(0).minute(0).second(0).unix();
   };
 
 }).call(this);

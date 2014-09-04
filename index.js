@@ -1,5 +1,5 @@
 (function() {
-  var Hapi, Logfile, Pings, Tags, api, fs, getConfig, handleError, moment, os, path, q, routes, server, spawn, _;
+  var Hapi, Logfile, Pings, Tags, api, fs, getConfig, handleError, moment, os, path, q, server, spawn, _;
 
   Hapi = require('hapi');
 
@@ -24,8 +24,6 @@
   _ = require('underscore');
 
   api = require('./src/api');
-
-  routes = require('./src/routes');
 
   server = new Hapi.Server(3891);
 
@@ -53,8 +51,7 @@
     logfile = new Logfile('./log.json');
     logfile.createLog();
     tags = new Tags(logfile);
-    api(server, tags, pinger);
-    routes(server);
+    api(server, tags, pinger, config);
     pinger.start();
     return pinger.on('ping', function(now) {
       var tmpfile;

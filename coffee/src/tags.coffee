@@ -35,7 +35,7 @@ module.exports =
 
         getAfterMidnight: (tagname) ->
             midnight = getMidnight()
-            return getAfter tagname, midnight
+            return @getAfter tagname, midnight
 
 
         getAllAfter: (unixTimestamp) ->
@@ -50,7 +50,7 @@ module.exports =
 
         getAllAfterMidnight: ->
             midnight = getMidnight()
-            return this.getAllAfter midnight.unix()
+            return this.getAllAfter midnight
 
         getTree: ->
             makeTag = (tag, top) ->
@@ -112,4 +112,4 @@ module.exports =
 
 
 getMidnight = ->
-    return Moment().hour(0).minute(0).second 0
+    return Moment().hour(0).minute(0).second(0).unix()

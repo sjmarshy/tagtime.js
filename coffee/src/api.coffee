@@ -1,7 +1,7 @@
 moment = require 'moment'
 _ = require 'underscore'
 
-module.exports = (server, tags, pinger) ->
+module.exports = (server, tags, pinger, config) ->
     getLast = (req, res) ->
         res pinger.lst
 
@@ -25,6 +25,15 @@ module.exports = (server, tags, pinger) ->
         }
         {
             method: 'GET'
+            path: '/api/time/tag/{name}'
+            handler: (req, res) ->
+                n = req.params.name
+                t = tags.getTimeDataFor n
+                res
+                    hours: (t.length * config.frequency) / 60
+        }
+        {
+            method: 'GET'
             path:   '/api/tag/tree'
             handler: (req, res) ->
                 res tags.getTree()
@@ -44,16 +53,24 @@ module.exports = (server, tags, pinger) ->
         }
         {
             method: 'GET'
-            path: '/api/today/find/{tag}'
+            path: '/api/today/find/{name}'
             handler: (req, res) ->
-                res tags.getAfterMidnight req.params.tag
+                res tags.getAfterMidnight req.params.name
         }
         {
             method: 'GET'
-            path: '/api/today/count/{tag}'
+            path: '/api/today/count/{name}'
             handler: (req, res) ->
-                tagList = tags.getAfterMidnight req.params.tag
+                tagList = tags.getAfterMidnight req.params.name
                 res tagList.length
+        }
+        {
+            method: 'GET'
+            path: '/api/today/time/{name}'
+            handler: (req, res) ->
+                tagList = tags.getAfterMidnight req.params.name
+                res
+                    hours: (tagList.length * config.frequency) / 60
         }
         {
             method: 'GET'
@@ -61,11 +78,12 @@ module.exports = (server, tags, pinger) ->
             handler: (req, res) ->
                 t = tags.getAllAfterMidnight()
 
-                res _(t).map (tag) ->
+                res _.chain(t).sortBy('time').map((tag) ->
                     tnew =
-                        time: moment.unix(tag.time).format('ddd, hA')
+                        time: moment.unix(tag.time).format('ddd, HH:mm:ss')
                         tags: tag.tags
                     return tnew
+                ).value()
         }
     ]
 

@@ -5,7 +5,7 @@
 
   _ = require('underscore');
 
-  module.exports = function(server, tags, pinger) {
+  module.exports = function(server, tags, pinger, config) {
     var getLast;
     getLast = function(req, res) {
       return res(pinger.lst);
@@ -30,6 +30,17 @@
         }
       }, {
         method: 'GET',
+        path: '/api/time/tag/{name}',
+        handler: function(req, res) {
+          var n, t;
+          n = req.params.name;
+          t = tags.getTimeDataFor(n);
+          return res({
+            hours: (t.length * config.frequency) / 60
+          });
+        }
+      }, {
+        method: 'GET',
         path: '/api/tag/tree',
         handler: function(req, res) {
           return res(tags.getTree());
@@ -50,17 +61,27 @@
         }
       }, {
         method: 'GET',
-        path: '/api/today/find/{tag}',
+        path: '/api/today/find/{name}',
         handler: function(req, res) {
-          return res(tags.getAfterMidnight(req.params.tag));
+          return res(tags.getAfterMidnight(req.params.name));
         }
       }, {
         method: 'GET',
-        path: '/api/today/count/{tag}',
+        path: '/api/today/count/{name}',
         handler: function(req, res) {
           var tagList;
-          tagList = tags.getAfterMidnight(req.params.tag);
+          tagList = tags.getAfterMidnight(req.params.name);
           return res(tagList.length);
+        }
+      }, {
+        method: 'GET',
+        path: '/api/today/time/{name}',
+        handler: function(req, res) {
+          var tagList;
+          tagList = tags.getAfterMidnight(req.params.name);
+          return res({
+            hours: (tagList.length * config.frequency) / 60
+          });
         }
       }, {
         method: 'GET',
@@ -68,14 +89,14 @@
         handler: function(req, res) {
           var t;
           t = tags.getAllAfterMidnight();
-          return res(_(t).map(function(tag) {
+          return res(_.chain(t).sortBy('time').map(function(tag) {
             var tnew;
             tnew = {
-              time: moment.unix(tag.time).format('ddd, hA'),
+              time: moment.unix(tag.time).format('ddd, HH:mm:ss'),
               tags: tag.tags
             };
             return tnew;
-          }));
+          }).value());
         }
       }
     ]);
