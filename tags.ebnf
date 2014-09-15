@@ -1,0 +1,73 @@
+(*
+ * Just to help me keep track of how I'd `ideally` like to track my tags
+ *)
+
+<ping> = <tag>[(, <context>)*];
+
+<tag>
+    = <work_tag> 
+    | <activity_tag>
+    | tag (* when already answering a ping *)
+    | <generic_tag>;
+
+<work_tag>    
+    = wk[
+         (:<generic_tag>)* 
+        | :<project_tag>
+        | :<project_task>
+    ];
+
+<activity_tag>
+    = proc[:<tag>] (* procrastination *)
+    | lunch
+    | install[:<app_name>]
+    | family
+    | tea
+    | out
+    | <website_tag>
+    | toilet
+    | talking[:<person>]
+    | travel[:<place>]
+    | out[:<place>]
+    | watch[:<film_name>]
+    
+<website_tag> = www:<web_address>
+
+<web_address> = <text>.<text>[(/<text>)*]
+
+<project_tag> 
+    = <project>[
+          :<issue_number> 
+        | :<project_task>
+    ];
+
+<project> 
+    = ECP       (* euro catering parts website    *)
+    | TRIM      (* Baker Bennett Trimlyne website *)
+
+<issue_number> = (0..9)*
+
+<project_task>
+    = bq[:<bq_number>]   (* build quote   *)
+    | br   (* writing brief *)
+    | r[, <research_context>]    (* research *)
+    | dsgn (* design *)
+    | email
+    | <release>
+    | <generic_tag>
+
+<bq_number> = (0..9)*[(a..Z)]
+
+<text> = [(a..Z)*]
+
+<release> = rel[:(0..9)*.(0..9)*.(0..9)*]
+
+<generic_tag> = <text>[:<generic_tag>]
+
+<research_context> = <context>
+
+<context> = <generic_tag> | <text> | personal | <mood> | <health> | <person>
+
+<mood> = mood:(0..10)
+
+<health> = health:<text>
