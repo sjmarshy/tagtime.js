@@ -1,5 +1,5 @@
 (function() {
-  var Moment, Record, Tag, Tags, getMidnight, _;
+  var Moment, Record, Tag, Tags, getMidnight, getTimes, orderTags, setDuration, _;
 
   Record = require('./record');
 
@@ -33,6 +33,14 @@
       })(this));
     }
 
+    Tags.prototype.getSpan = function() {
+      var f, l;
+      f = this.records[0];
+      l = this.records[this.records.length - 1];
+      console.log(Moment.unix(f.time).format('d/M/YYYY'));
+      return Moment.duration(l.time - f.time, 's').asMinutes();
+    };
+
     Tags.prototype.getTimeDataFor = function(tagname) {
       var data;
       data = [];
@@ -45,6 +53,30 @@
         }
       });
       return data;
+    };
+
+    Tags.prototype.getTimeTotalFor = function(tagname) {
+      var inOrder, singleTags, tags, times;
+      tags = _.map(this.records, function(record) {
+        return {
+          time: record.time,
+          tags: Tag.stringify(record.tags)
+        };
+      });
+      inOrder = orderTags(tags);
+      singleTags = _.map(inOrder, function(tag) {
+        return {
+          tag: tag.tags[0],
+          time: tag.time
+        };
+      });
+      times = getTimes(singleTags);
+      return _.chain(times).filter(function(tag) {
+        return tag.tag.search(new RegExp(tagname)) > -1;
+      }).reduce(function(memo, tag) {
+        memo += tag.duration;
+        return memo;
+      }, 0).value();
     };
 
     Tags.prototype.getAfter = function(tagname, unixTimestamp) {
@@ -76,6 +108,19 @@
       var midnight;
       midnight = getMidnight();
       return this.getAllAfter(midnight);
+    };
+
+    Tags.prototype.getTimesAfterMidnight = function() {
+      var inOrder, singleTags, tags;
+      tags = this.getAllAfterMidnight();
+      inOrder = orderTags(tags);
+      singleTags = _.map(inOrder, function(tag) {
+        return {
+          tag: tag.tags[0],
+          time: tag.time
+        };
+      });
+      return getTimes(singleTags);
     };
 
     Tags.prototype.getTree = function() {
@@ -142,6 +187,49 @@
 
   getMidnight = function() {
     return Moment().hour(0).minute(0).second(0).unix();
+  };
+
+  orderTags = function(tags) {
+    return _.sortBy(tags, 'time');
+  };
+
+  setDuration = function(timeTag) {
+    return timeTag.duration = Moment.duration(parseInt(timeTag.end) - parseInt(timeTag.start), 's').asMinutes();
+  };
+
+  getTimes = function(tags) {
+    var inOrder;
+    inOrder = orderTags(tags);
+    return _.reduce(inOrder, function(memo, tag) {
+      var difference, last, len, newTag;
+      len = memo.length;
+      if (len > 0) {
+        last = memo[len - 1];
+        if (last.tag === tag.tag) {
+          last.end = tag.time;
+        } else {
+          difference = (parseInt(tag.time) - parseInt(last.end)) / 2;
+          last.end = parseInt(last.end) + parseInt(difference);
+          newTag = {
+            tag: tag.tag,
+            start: parseInt(tag.time) - difference,
+            end: parseInt(tag.time)
+          };
+          setDuration(newTag);
+          memo.push(newTag);
+        }
+        setDuration(last);
+        return memo;
+      } else {
+        memo.push({
+          tag: tag.tag,
+          start: tag.time,
+          end: tag.time,
+          duration: 20
+        });
+        return memo;
+      }
+    }, []);
   };
 
 }).call(this);
