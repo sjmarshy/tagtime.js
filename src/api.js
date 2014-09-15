@@ -21,23 +21,17 @@
         }
       }, {
         method: 'GET',
-        path: '/api/count/tag/{name}',
+        path: '/api/time',
         handler: function(req, res) {
-          var n, t;
-          n = req.params.name;
-          t = tags.getTimeDataFor(n);
-          return res(t.length);
+          return res(tags.getSpan());
         }
       }, {
         method: 'GET',
-        path: '/api/time/tag/{name}',
+        path: '/api/time/{name}',
         handler: function(req, res) {
-          var n, t;
+          var n;
           n = req.params.name;
-          t = tags.getTimeDataFor(n);
-          return res({
-            hours: (t.length * config.frequency) / 60
-          });
+          return res(tags.getTimeTotalFor(n));
         }
       }, {
         method: 'GET',
@@ -77,11 +71,22 @@
         method: 'GET',
         path: '/api/today/time/{name}',
         handler: function(req, res) {
-          var tagList;
-          tagList = tags.getAfterMidnight(req.params.name);
-          return res({
-            hours: (tagList.length * config.frequency) / 60
+          var name, namedTags, tagList;
+          name = req.params.name;
+          tagList = tags.getTimesAfterMidnight();
+          namedTags = _.filter(tagList, function(tag) {
+            return tag.tag.search(new RegExp(name)) > -1;
           });
+          return res(_.reduce(namedTags, function(memo, tag) {
+            memo += tag.duration;
+            return memo;
+          }, 0));
+        }
+      }, {
+        method: 'GET',
+        path: '/api/today/time',
+        handler: function(req, res) {
+          return res(tags.getTimesAfterMidnight());
         }
       }, {
         method: 'GET',

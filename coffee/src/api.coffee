@@ -17,20 +17,18 @@ module.exports = (server, tags, pinger, config) ->
         }
         {
             method: 'GET'
-            path: '/api/count/tag/{name}'
+            # total time tagged - from first tag to last
+            # in minutes
+            path: '/api/time'
             handler: (req, res) ->
-                n = req.params.name
-                t = tags.getTimeDataFor n
-                res t.length
+                res tags.getSpan()
         }
         {
             method: 'GET'
-            path: '/api/time/tag/{name}'
+            path: '/api/time/{name}'
             handler: (req, res) ->
                 n = req.params.name
-                t = tags.getTimeDataFor n
-                res
-                    hours: (t.length * config.frequency) / 60
+                res tags.getTimeTotalFor n
         }
         {
             method: 'GET'
@@ -68,9 +66,21 @@ module.exports = (server, tags, pinger, config) ->
             method: 'GET'
             path: '/api/today/time/{name}'
             handler: (req, res) ->
-                tagList = tags.getAfterMidnight req.params.name
-                res
-                    hours: (tagList.length * config.frequency) / 60
+                name    = req.params.name
+                tagList = tags.getTimesAfterMidnight()
+                namedTags = _.filter tagList, (tag) ->
+                    return (tag.tag.search(new RegExp(name)) > -1)
+
+                res _.reduce namedTags, (memo, tag) ->
+                    memo += tag.duration
+                    return memo
+                , 0
+        }
+        {
+            method: 'GET'
+            path: '/api/today/time'
+            handler: (req, res) ->
+                res tags.getTimesAfterMidnight()
         }
         {
             method: 'GET'
