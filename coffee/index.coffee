@@ -10,7 +10,6 @@ moment  = require 'moment'
 {spawn} = require 'child_process'
 _       = require 'underscore'
 api     = require './src/api'
-routes  = require './src/routes'
 
 server = new Hapi.Server 3891
 
@@ -44,8 +43,7 @@ getConfig './config/tagtime.json'
     tags = new Tags logfile
 
     # api provides a HTTP interface to grab all this stuff
-    api server, tags, pinger
-    routes server
+    api server, tags, pinger, config
 
     pinger.start()
     pinger.on 'ping', (now) ->

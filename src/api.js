@@ -5,7 +5,7 @@
 
   _ = require('underscore');
 
-  module.exports = function(server, tags, pinger) {
+  module.exports = function(server, tags, pinger, config) {
     var getLast;
     getLast = function(req, res) {
       return res(pinger.lst);
@@ -21,12 +21,17 @@
         }
       }, {
         method: 'GET',
-        path: '/api/count/tag/{name}',
+        path: '/api/time',
         handler: function(req, res) {
-          var n, t;
+          return res(tags.getSpan());
+        }
+      }, {
+        method: 'GET',
+        path: '/api/time/{name}',
+        handler: function(req, res) {
+          var n;
           n = req.params.name;
-          t = tags.getTimeDataFor(n);
-          return res(t.length);
+          return res(tags.getTimeTotalFor(n));
         }
       }, {
         method: 'GET',
@@ -50,17 +55,38 @@
         }
       }, {
         method: 'GET',
-        path: '/api/today/find/{tag}',
+        path: '/api/today/find/{name}',
         handler: function(req, res) {
-          return res(tags.getAfterMidnight(req.params.tag));
+          return res(tags.getAfterMidnight(req.params.name));
         }
       }, {
         method: 'GET',
-        path: '/api/today/count/{tag}',
+        path: '/api/today/count/{name}',
         handler: function(req, res) {
           var tagList;
-          tagList = tags.getAfterMidnight(req.params.tag);
+          tagList = tags.getAfterMidnight(req.params.name);
           return res(tagList.length);
+        }
+      }, {
+        method: 'GET',
+        path: '/api/today/time/{name}',
+        handler: function(req, res) {
+          var name, namedTags, tagList;
+          name = req.params.name;
+          tagList = tags.getTimesAfterMidnight();
+          namedTags = _.filter(tagList, function(tag) {
+            return tag.tag.search(new RegExp(name)) > -1;
+          });
+          return res(_.reduce(namedTags, function(memo, tag) {
+            memo += tag.duration;
+            return memo;
+          }, 0));
+        }
+      }, {
+        method: 'GET',
+        path: '/api/today/time',
+        handler: function(req, res) {
+          return res(tags.getTimesAfterMidnight());
         }
       }, {
         method: 'GET',
@@ -68,14 +94,14 @@
         handler: function(req, res) {
           var t;
           t = tags.getAllAfterMidnight();
-          return res(_(t).map(function(tag) {
+          return res(_.chain(t).sortBy('time').map(function(tag) {
             var tnew;
             tnew = {
-              time: moment.unix(tag.time).format('ddd, hA'),
+              time: moment.unix(tag.time).format('ddd, HH:mm:ss'),
               tags: tag.tags
             };
             return tnew;
-          }));
+          }).value());
         }
       }
     ]);
