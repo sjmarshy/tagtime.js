@@ -4,7 +4,9 @@
   "description": "A node.js implementation of [tagtime](https://github.com/dreeves/tagtime)",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "mocha -R spec",
+    "build": "babel -s es2015 -d build",
+    "build:watch": "babel -s -w es2015 -d build"
   },
   "repository": {
     "type": "git",
@@ -31,6 +33,7 @@
     "q": "^1.0.1"
   },
   "devDependencies": {
+    "babel-preset-es2015": "^6.3.13",
     "gulp-coffee": "^2.1.1"
   }
 }
