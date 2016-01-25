@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Tagtime.js | Ping</title>
+  </head>
+  <body>
+
+    <h1>What are you doing right now?</h1>
+
+    <p>we only need to know the single thing you're focusing on this second.
+    feel free to make the tags as simple or complex as you like. Separate layers
+    in your tags with a :, eg. work:projects:tagtime - but keep it to a single
+    tag per ping</p>
+
+    <form>
+
+      <input type="text" name="tag">
+
+      <a href="#">Submit</a>
+    </form>
+  </body>
+  <script>
+
+    var ipcRenderer = require("electron").ipcRenderer;
+
+    ipcRenderer.on("request:time", function (e, time) {
+        window.time = time;
+    });
+
+    ipcRenderer.send("request:time");
+
+    window.document.getElementsByTagName("a")[0]
+      .addEventListener("click", function () {
+
+        var tag = window.document.querySelector("input[name=tag]").value;
+
+        if (tag.length > 0) {
+
+            ipcRenderer.send("tag:" + time.toString(), tag.toString());
+            window.close();
+        }
+      });
+  </script>
+</html>

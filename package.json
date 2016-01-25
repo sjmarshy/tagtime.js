@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -R spec",
+    "start": "electron ./build/index.js",
     "build": "babel -s es2015 -d build",
     "build:watch": "babel -s -w es2015 -d build"
   },
