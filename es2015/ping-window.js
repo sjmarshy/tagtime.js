@@ -16,16 +16,18 @@ export default function main(time) {
 
     const lastTag = getLastTag();
 
-    ipcMain.on("request:pingdata", e => {
+    ipcMain.on("request:pingdata", function handleRequestPingdata(e) {
 
         e.sender.send("request:pingdata", {
             lastTag
         });
+        ipcMain.removeListener("request:pingdata", handleRequestPingdata);
     });
 
-    ipcMain.on("request:time", e => {
+    ipcMain.on("request:time", function handleRequestTime (e) {
 
         e.sender.send("request:time", time);
+        ipcMain.removeListener("request:time", handleRequestTime);
     });
 
     ipcMain.on("tag:" + time.toString(), function handleTag(event, tag) {

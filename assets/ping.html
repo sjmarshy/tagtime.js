@@ -27,7 +27,6 @@
     function submitTag(time, tag) {
 
         ipcRenderer.send("tag:" + time.toString(), tag.toString());
-        window.close();
     }
 
     var ipcRenderer = require("electron").ipcRenderer;
@@ -45,6 +44,7 @@
         tag.addEventListener("click", function () {
 
             submitTag(time, data.lastTag);
+            window.close();
         });
     });
 
@@ -59,6 +59,7 @@
         if (tag.length > 0) {
 
             submitTag(time, tag);
+            window.close();
         }
       });
   </script>
