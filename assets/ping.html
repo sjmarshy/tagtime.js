@@ -4,10 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>Tagtime.js | Ping</title>
+    <link rel="stylesheet" href="css/ping.css" type="text/css" media="screen" title="no title" charset="utf-8">
   </head>
-  <body>
+  <body class="ping-body">
 
-    <h1>What are you doing right now?</h1>
+    <h1 class="title -time"></h1>
+    <h2 class="title">What are you doing right now?</h2>
 
     <div class="last-tag">
 
@@ -15,52 +17,13 @@
         <a href="#" class="tag"></a>
     </div>
 
-    <form>
+    <form class="form">
 
-      <input type="text" name="tag">
+      <input class="input" type="text" name="tag">
 
       <a class="submit" href="#">Submit</a>
     </form>
   </body>
-  <script>
 
-    function submitTag(time, tag) {
-
-        ipcRenderer.send("tag:" + time.toString(), tag.toString());
-    }
-
-    var ipcRenderer = require("electron").ipcRenderer;
-
-    ipcRenderer.on("request:time", function (e, time) {
-        window.time = time;
-    });
-
-    ipcRenderer.on("request:pingdata", function (e, data) {
-
-        window.pingdata = data;
-        var tag = document.querySelector(".last-tag .tag");
-
-        tag.innerHTML = data.lastTag;
-        tag.addEventListener("click", function () {
-
-            submitTag(time, data.lastTag);
-            window.close();
-        });
-    });
-
-    ipcRenderer.send("request:time");
-    ipcRenderer.send("request:pingdata");
-
-    window.document.querySelector("a.submit")
-    .addEventListener("click", function () {
-
-        var tag = window.document.querySelector("input[name=tag]").value;
-
-        if (tag.length > 0) {
-
-            submitTag(time, tag);
-            window.close();
-        }
-      });
-  </script>
+  <script src="js/ping.js"></script>
 </html>

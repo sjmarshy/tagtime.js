@@ -1,6 +1,7 @@
 import electron from "electron";
 import { resolve } from "path";
 import { storeTag, getLastTag } from "./storage.js";
+import moment from "moment";
 
 const { BrowserWindow, ipcMain } = electron;
 
@@ -19,7 +20,8 @@ export default function main(time) {
     ipcMain.on("request:pingdata", function handleRequestPingdata(e) {
 
         e.sender.send("request:pingdata", {
-            lastTag
+            lastTag,
+            dateString: moment.unix(time).format("YYYY-MM-DD HH:mm:ss")
         });
         ipcMain.removeListener("request:pingdata", handleRequestPingdata);
     });

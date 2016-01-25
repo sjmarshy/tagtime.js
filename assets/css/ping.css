@@ -1,0 +1,15 @@
+.ping-body {
+
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.ping-body > .title {
+
+  font-size: 18px;
+}
+
+.ping-body > .form > .input {
+
+  font-family: monospace;
+}

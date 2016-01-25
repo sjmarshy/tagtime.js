@@ -1,7 +1,7 @@
 import config from "zero-env";
 import moment from "moment";
 import { join, resolve } from "path";
-import { statSync, readDirSync, readFileSync, writeFileSync } from "fs";
+import { statSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
 const STORAGE_DIR = resolve(config.tagtime.storagedir || join(config.home, ".tagtime"));
 
@@ -49,8 +49,8 @@ export function storeTag(time, tag) {
 
 export function getAllData() {
 
-    let files = readDirSync(STORAGE_DIR);
-    let ds = files.map(loadFileJson);
+    let files = readdirSync(STORAGE_DIR);
+    let ds = files.map(f => resolve(STORAGE_DIR, f)).map(loadFileJson);
 
     return ds.reduce((m, d) => {
 

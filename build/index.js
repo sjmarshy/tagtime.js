@@ -18,16 +18,24 @@ var _pingWindow = require("./ping-window.js");
 
 var _pingWindow2 = _interopRequireDefault(_pingWindow);
 
+var _stats = require("./stats.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var SEED = _zeroEnv2.default.tagtime.seed;
 var FREQ = _zeroEnv2.default.tagtime.frequency;
+var DEBUG = _zeroEnv2.default.tagtime.debug;
 
 function main() {
 
     (0, _timer2.default)(SEED, FREQ, function (time) {
 
         (0, _pingWindow2.default)(time);
+
+        if (DEBUG) {
+
+            console.log((0, _stats.statString)());
+        }
     });
 
     _electron.app.on("ready", function () {
