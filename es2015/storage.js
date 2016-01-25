@@ -58,6 +58,22 @@ export function getAllData() {
     }, {});
 }
 
+export function getLastTag() {
+
+    let filename = getFilename(Date.now() / 1000);
+
+    try {
+
+        let data = loadFileJson(filename);
+        let ks = Object.keys(data).sort();
+
+        return data[ks.reverse()[0]];
+    } catch (e) {
+
+        return null;
+    }
+}
+
 let storageDirStats;
 
 try {

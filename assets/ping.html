@@ -9,19 +9,26 @@
 
     <h1>What are you doing right now?</h1>
 
-    <p>we only need to know the single thing you're focusing on this second.
-    feel free to make the tags as simple or complex as you like. Separate layers
-    in your tags with a :, eg. work:projects:tagtime - but keep it to a single
-    tag per ping</p>
+    <div class="last-tag">
+
+        <p>Last Tag Used</p>
+        <a href="#" class="tag"></a>
+    </div>
 
     <form>
 
       <input type="text" name="tag">
 
-      <a href="#">Submit</a>
+      <a class="submit" href="#">Submit</a>
     </form>
   </body>
   <script>
+
+    function submitTag(time, tag) {
+
+        ipcRenderer.send("tag:" + time.toString(), tag.toString());
+        window.close();
+    }
 
     var ipcRenderer = require("electron").ipcRenderer;
 
@@ -29,17 +36,29 @@
         window.time = time;
     });
 
-    ipcRenderer.send("request:time");
+    ipcRenderer.on("request:pingdata", function (e, data) {
 
-    window.document.getElementsByTagName("a")[0]
-      .addEventListener("click", function () {
+        window.pingdata = data;
+        var tag = document.querySelector(".last-tag .tag");
+
+        tag.innerHTML = data.lastTag;
+        tag.addEventListener("click", function () {
+
+            submitTag(time, data.lastTag);
+        });
+    });
+
+    ipcRenderer.send("request:time");
+    ipcRenderer.send("request:pingdata");
+
+    window.document.querySelector("a.submit")
+    .addEventListener("click", function () {
 
         var tag = window.document.querySelector("input[name=tag]").value;
 
         if (tag.length > 0) {
 
-            ipcRenderer.send("tag:" + time.toString(), tag.toString());
-            window.close();
+            submitTag(time, tag);
         }
       });
   </script>

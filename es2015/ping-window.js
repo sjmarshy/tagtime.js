@@ -1,6 +1,6 @@
 import electron from "electron";
 import { resolve } from "path";
-import { storeTag } from "./storage.js";
+import { storeTag, getLastTag } from "./storage.js";
 
 const { BrowserWindow, ipcMain } = electron;
 
@@ -13,6 +13,15 @@ export default function main(time) {
         height: 400,
         title: "Tagtime.js | Ping",
         resizable: false });
+
+    const lastTag = getLastTag();
+
+    ipcMain.on("request:pingdata", e => {
+
+        e.sender.send("request:pingdata", {
+            lastTag
+        });
+    });
 
     ipcMain.on("request:time", e => {
 
