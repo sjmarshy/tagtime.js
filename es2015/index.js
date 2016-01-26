@@ -1,8 +1,8 @@
 import config from "zero-env";
 import timer from "./timer.js";
 import { app } from "electron";
-import controlWindow from ".windows/control-window.js";
-import pingWindow from ".windows/ping-window.js";
+import controlWindow from "./windows/control-window.js";
+import pingWindow from "./windows/ping-window.js";
 import { statString } from "./stats.js";
 
 const SEED = config.tagtime.seed;

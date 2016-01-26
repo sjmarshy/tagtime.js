@@ -6,8 +6,12 @@
   "scripts": {
     "test": "mocha -R spec",
     "start": "electron ./build/index.js",
-    "build": "babel -s es2015 -d build",
-    "build:watch": "babel -s -w es2015 -d build"
+    "build": "npm run build:be; npm run build:fe",
+    "build:watch": "npm run build:be:watch & npm run build:fe:watch",
+    "build:be": "babel -s es2015 -d build",
+    "build:be:watch": "babel -s -w es2015 -d build",
+    "build:fe": "babel -s assets/es2015 -d assets/js",
+    "build:fe:watch": "babel -s -w assets/es2015 -d assets/js"
   },
   "repository": {
     "type": "git",
@@ -24,14 +28,19 @@
   },
   "homepage": "https://github.com/sjmarshy/tagtime.js",
   "dependencies": {
-    "moment": "^2.7.0",
-    "npmlog": "^0.1.1",
     "coffee-script": "^1.7.1",
     "gulp": "^3.8.6",
-    "mersenne": "0.0.3",
-    "underscore": "^1.6.0",
     "hapi": "^6.2.1",
-    "q": "^1.0.1"
+    "jsnox": "^2.1.2",
+    "mersenne": "0.0.3",
+    "moment": "^2.7.0",
+    "npmlog": "^0.1.1",
+    "q": "^1.0.1",
+    "ramda": "^0.19.1",
+    "react": "^0.14.6",
+    "react-dom": "^0.14.6",
+    "underscore": "^1.6.0",
+    "zero-env": "^1.0.1"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.3.13",

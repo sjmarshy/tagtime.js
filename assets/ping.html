@@ -1,51 +1,17 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>Tagtime.js | Ping</title>
     <link rel="stylesheet" href="css/ping.css" type="text/css" media="screen" title="no title" charset="utf-8">
   </head>
-  <body class="ping-body">
+
+  <body>
+
+    <div id="app"></div>
+    <script src="js/ping/index.js"></script>
   </body>
-  <script>
 
-    function submitTag(time, tag) {
-
-        ipcRenderer.send("tag:" + time.toString(), tag.toString());
-        window.close();
-    }
-
-    var ipcRenderer = require("electron").ipcRenderer;
-
-    ipcRenderer.on("request:time", function (e, time) {
-        window.time = time;
-    });
-
-    ipcRenderer.on("request:pingdata", function (e, data) {
-
-        window.pingdata = data;
-        var tag = document.querySelector(".last-tag .tag");
-
-        tag.innerHTML = data.lastTag;
-        tag.addEventListener("click", function () {
-
-            submitTag(time, data.lastTag);
-        });
-    });
-
-    ipcRenderer.send("request:time");
-    ipcRenderer.send("request:pingdata");
-
-    window.document.querySelector("a.submit")
-    .addEventListener("click", function () {
-
-        var tag = window.document.querySelector("input[name=tag]").value;
-
-        if (tag.length > 0) {
-
-            submitTag(time, tag);
-        }
-      });
-  </script>
 </html>

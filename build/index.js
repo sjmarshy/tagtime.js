@@ -10,11 +10,11 @@ var _timer2 = _interopRequireDefault(_timer);
 
 var _electron = require("electron");
 
-var _controlWindow = require("./control-window.js");
+var _controlWindow = require("./windows/control-window.js");
 
 var _controlWindow2 = _interopRequireDefault(_controlWindow);
 
-var _pingWindow = require("./ping-window.js");
+var _pingWindow = require("./windows/ping-window.js");
 
 var _pingWindow2 = _interopRequireDefault(_pingWindow);
 

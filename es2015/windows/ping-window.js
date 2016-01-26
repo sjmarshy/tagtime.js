@@ -1,40 +1,32 @@
 import electron from "electron";
 import { resolve } from "path";
-import { storeTag, getLastTag } from "./storage.js";
+import { storeTag, getLastTag } from "../storage.js";
+import createWindow from "../window.js";
 import moment from "moment";
 
-const { BrowserWindow, ipcMain } = electron;
+const { ipcMain } = electron;
 
-let controlWindow = null;
 
 export default function main(time) {
 
-    controlWindow = new BrowserWindow({
-        width: 400,
-        height: 400,
-        title: "Tagtime.js | Ping",
-        resizable: false });
+    let controlWindow = createWindow({
+        title: "Tagtime.js | Ping" },
 
-    const lastTag = getLastTag();
+        { time: time,
 
-    ipcMain.on("request:pingdata", e => {
+            id: time.toString(),
 
-        e.sender.send("request:pingdata", {
-            lastTag,
-            dateString: moment.unix(time).format("YYYY-MM-DD HH:mm:ss")
-        });
-    });
+            lastTag: getLastTag(),
 
-    ipcMain.on("request:time", e => {
+            dateString: moment.unix(time).format("YYYY-MM-DD HH:mm:ss") }).window;
 
-        e.sender.send("request:time", time);
-    });
 
     ipcMain.on("tag:" + time.toString(), function handleTag(event, tag) {
 
         storeTag(time, tag);
         ipcMain.removeListener(`tag:${time.toString()}`, handleTag);
+        controlWindow.close();
     });
 
-    controlWindow.loadURL(`file://${resolve(__dirname, "..", "assets", "ping.html")}`);
+    controlWindow.loadURL(`file://${resolve(__dirname, "..", "..", "assets", "ping.html")}`);
 }
