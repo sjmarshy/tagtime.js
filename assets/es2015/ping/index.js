@@ -47,8 +47,8 @@ const App = React.createClass({
                 d("div",
                     d("p", "previously used"),
                     d("p.previous", { onClick: this.onSubmit(this.state.lastTag) }, this.state.lastTag)),
-                d("form", { onSubmit: this.onSubmit(this.state.currentInput )},
-                    d("input", { type: "text", onChange: this.onChangeInput, value: this.state.currentInput }),
+                d("form.form", { onSubmit: this.onSubmit(this.state.currentInput )},
+                    d("input.input", { type: "text", onChange: this.onChangeInput, value: this.state.currentInput }),
                     d("button.submit", "Submit")));
     }
 });

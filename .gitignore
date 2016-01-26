@@ -4,3 +4,4 @@ node_modules
 *.sketch
 build
 assets/js/*
+*.swo

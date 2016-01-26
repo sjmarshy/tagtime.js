@@ -4,12 +4,24 @@
   text-align: center;
 }
 
+.ping-body > a {
+
+  color: orange;
+}
+
 .ping-body > .title {
 
   font-size: 18px;
+}
+
+.ping-body > .form {
+
+  display: flexbox;
+  flex-direction: column;
 }
 
 .ping-body > .form > .input {
 
   font-family: monospace;
 }
+
