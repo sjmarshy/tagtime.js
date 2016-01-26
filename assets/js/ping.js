@@ -6,6 +6,13 @@ var cycleCore = remote.require("@cycle/core");
 var cycleDom = remote.require("@cycle/dom");
 var Rx = remote.require("rx");
 
+var div = cycleDom.div;
+var h1 = cycleDom.h1;
+var h2 = cycleDom.h2;
+var p = cycleDom.p;
+var input = cycleDom.input;
+var a = cycleDom.a;
+
 function submitTag(time, tag) {
 
     ipcRenderer.send("tag:" + time.toString(), tag.toString());
@@ -51,39 +58,73 @@ function intents(sources) {
 
     return {
 
-        lastTag: sources.ipcPingdata.map(function (ev, data) { return data.lastTag; }),
-        dateString: sources.ipcPingdata.map(function (ev, data) { return data.dateString; })
+        setLastTag$: sources.ipc.filter(hasProperty("channel", "lastTag")).map(function (ev, data) { return data.lastTag; }),
+        setDateString$: sources.ipc.filter(hasProperty("channel", "dateString")).map(function (ev, data) { return data.dateString; }),
+        setTimeOfPing$: sources.ipc.filter(hasProperty("channel", "timeOfPing")).map(),
+        submitLastTag$: sources.dom.select(".last-tag .tag").events("click"),
+        submitCurrentInput$: sources.dom.select("a.submit").events("click"),
+        updateCurrentInput$: sources.dom.select("input").events("change").map(function (e) { return e.target.value; })
     };
+}
+
+function model(actions) {
+
+    return Rx.Observable.combineLatest(
+
+            actions.lastTag$.startWith(""),
+
+            actions.dateString$.startWith(""),
+
+            actions.updateCurrentInput$.startWith(""),
+
+            function (lastTag, dateString, currentInput) {
+
+                let state = {
+                    lastTag: lastTag,
+                    dateString: dateString,
+                    currentInput: currentInput
+                };
+
+                return state;
+            });
+}
+
+function view(state$) {
+
+    return state$.map(function (state) {
+
+        return div([
+
+            h1({ class: "title -time" }, state.dateString),
+            h2("What are you doing right now?"),
+
+            div({ class: "last-tag" }, [
+
+                p("last time:"),
+                p({ class: "tag" }, state.lastTag)
+            ]),
+
+            input({ type: "text", name: "tag" }),
+            a({ class: "submit", href: "#" }, "Submit" )
+        ]);
+    });
 }
 
 function main(sources) {
 
-    sources.ipcTime.do((ev, time) => {
-
-        if (time) {
-
-            window.time = time;
-        }
-    });
-
     var actions = intents(sources);
-    var model$ = model(actions);
-    var v = view(model$);
+    var state$ = model(actions);
+    var v = view(state$);
 
     return {
 
-        ipcTime: Rx.Observable.just({ args: [] }),
-        ipcPingdata: Rx.Observable.just({ args: [] }),
         dom: v
     };
 }
 
 var drivers = {
-
-    ipcTime: makeIPCDriver(ipcRenderer, "request:time"),
-    ipcPingdata: makeIPCDriver(ipcRenderer, "request:pingdata"),
-    ipcSubmitTag: makeIPCDriver(ipcRenderer, "tag:" + window.time.toString()),
-    dom: cycleDom.makeDOMDriver("#ping-app")
+    dom: cycleDom.makeDOMDriver("#ping-app"),
+    ipc: makeIPCDriver(ipcRenderer)
 };
 
 cycleCore.run(main, drivers);
