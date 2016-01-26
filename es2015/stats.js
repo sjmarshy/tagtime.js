@@ -29,7 +29,14 @@ export function averageTimeBetweenPings() {
     const d = getAllData();
     const ks = Object.keys(d);
 
-    return slice(0, -1, ks.map(parseFloat).sort(numericSort).reverse().map(differences)).reduce(sum) / ks.length;
+    return slice(
+            0,
+            -1,
+            ks
+                .map(parseFloat)
+                .sort(numericSort)
+                .reverse()
+                .map(differences)).reduce(sum) / ks.length;
 }
 
 export function statString() {
