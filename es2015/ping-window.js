@@ -17,19 +17,17 @@ export default function main(time) {
 
     const lastTag = getLastTag();
 
-    ipcMain.on("request:pingdata", function handleRequestPingdata(e) {
+    ipcMain.on("request:pingdata", e => {
 
         e.sender.send("request:pingdata", {
             lastTag,
             dateString: moment.unix(time).format("YYYY-MM-DD HH:mm:ss")
         });
-        ipcMain.removeListener("request:pingdata", handleRequestPingdata);
     });
 
-    ipcMain.on("request:time", function handleRequestTime (e) {
+    ipcMain.on("request:time", e => {
 
         e.sender.send("request:time", time);
-        ipcMain.removeListener("request:time", handleRequestTime);
     });
 
     ipcMain.on("tag:" + time.toString(), function handleTag(event, tag) {

@@ -8,5 +8,44 @@
   </head>
   <body class="ping-body">
   </body>
-  <script src="js/ping.js"></script>
+  <script>
+
+    function submitTag(time, tag) {
+
+        ipcRenderer.send("tag:" + time.toString(), tag.toString());
+        window.close();
+    }
+
+    var ipcRenderer = require("electron").ipcRenderer;
+
+    ipcRenderer.on("request:time", function (e, time) {
+        window.time = time;
+    });
+
+    ipcRenderer.on("request:pingdata", function (e, data) {
+
+        window.pingdata = data;
+        var tag = document.querySelector(".last-tag .tag");
+
+        tag.innerHTML = data.lastTag;
+        tag.addEventListener("click", function () {
+
+            submitTag(time, data.lastTag);
+        });
+    });
+
+    ipcRenderer.send("request:time");
+    ipcRenderer.send("request:pingdata");
+
+    window.document.querySelector("a.submit")
+    .addEventListener("click", function () {
+
+        var tag = window.document.querySelector("input[name=tag]").value;
+
+        if (tag.length > 0) {
+
+            submitTag(time, tag);
+        }
+      });
+  </script>
 </html>
